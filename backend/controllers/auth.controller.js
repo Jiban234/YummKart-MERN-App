@@ -6,7 +6,7 @@ export const signUp = async (req, res) => {
   try {
     const { fullName, email, password, mobile, role } = req.body;
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({
         message: "User Already Exist",
@@ -17,7 +17,7 @@ export const signUp = async (req, res) => {
         message: "password must be atleast 6 characters",
       });
     }
-    if (mobile.length != 10) {
+    if (mobile.length < 10) {
       return res.status(400).json({
         message: "mobile number must be of 10 digits",
       });
@@ -56,7 +56,7 @@ export const signIn = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(400).json({
         message: "User doesn't Exist",
@@ -72,6 +72,7 @@ export const signIn = async (req, res) => {
     }
 
     const token = generateToken(user._id);
+    /** */ console.log("Generated token:", token);
 
     res.cookie("token", token, {
       secure: process.env.NODE_ENV === "production",
@@ -82,7 +83,7 @@ export const signIn = async (req, res) => {
 
     const { password: _, ...userData } = user._doc;
     return res.status(200).json({
-      success: false,
+      success: true,
       message: "signed in successfully",
       user: userData,
     });
