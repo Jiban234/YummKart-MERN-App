@@ -82,30 +82,74 @@
 
 // export default ForgotPassword;
 
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { FaRegEye } from "react-icons/fa";
 import { FaRegEyeSlash } from "react-icons/fa";
+import { serverUrl } from "../App";
+import axios from "axios";
 
 const ForgotPassword = () => {
-  const [step, setStep] = useState(3);
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [err, setErr] = useState("");
   const inputRefs = useRef([]);
   const navigate = useNavigate();
 
-  const sendOtp = () => {
-    setStep(2);
+  const handleSendOtp = async () => {
+    try {
+      const result = await axios.post(
+        `${serverUrl}/api/auth/send-otp`,
+        { email },
+        { withCredentials: true }
+      );
+      console.log(result);
+      setErr("");
+      setStep(2);
+    } catch (error) {
+      setErr(error?.response?.data?.message);
+    }
   };
 
-  const verifyOtp = () => {
-    const enteredOtp = otp.join("");
-    console.log("Entered OTP:", enteredOtp);
+  const handleVerifyOtp = async () => {
+    try {
+      // Join the OTP array into a string
+      const otpString = otp.join("");
+      const result = await axios.post(
+        `${serverUrl}/api/auth/verify-otp`,
+        { email, otp: otpString },
+        { withCredentials: true }
+      );
+      console.log(result);
+      setErr("");
+      setStep(3);
+    } catch (error) {
+      setErr(error?.response?.data?.message);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (newPassword !== confirmPassword) {
+      return;
+    }
+    try {
+      const result = await axios.post(
+        `${serverUrl}/api/auth/reset-password`,
+        { email, newPassword },
+        { withCredentials: true }
+      );
+      console.log(result);
+      setErr("");
+      navigate("/signin");
+    } catch (error) {
+      setErr(error?.response?.data?.message);
+    }
   };
 
   const handleChange = (e, index) => {
@@ -121,8 +165,6 @@ const ForgotPassword = () => {
       inputRefs.current[index + 1].focus();
     }
   };
-
-  const handleNewPassword= ()=>{}
 
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
@@ -158,14 +200,22 @@ const ForgotPassword = () => {
                 placeholder="Enter Your Email"
                 onChange={(e) => setEmail(e.target.value)}
                 value={email}
+                required
               />
             </div>
             <button
               className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white font-semibold transition duration-200"
-              onClick={sendOtp}
+              onClick={handleSendOtp}
             >
               Send OTP
             </button>
+
+            {/* error display field(if any) */}
+            {err && (
+              <div className="mt-3 flex items-center justify-center gap-2 p-2 rounded-lg bg-red-100 border border-red-300 text-red-600 text-sm font-medium animate-fadeIn">
+                *{err}
+              </div>
+            )}
           </div>
         )}
         {/* step-2 enter-otp-page */}
@@ -190,13 +240,13 @@ const ForgotPassword = () => {
             </div>
             <button
               className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white font-semibold transition duration-200"
-              onClick={verifyOtp}
+              onClick={handleVerifyOtp}
             >
               Verify OTP
             </button>
           </div>
         )}
-        {/* step-1 forgot-password-page */}
+        {/* step-3 forgot-password-page */}
         {step === 3 && (
           <div>
             <div className="mb-4">
@@ -213,6 +263,7 @@ const ForgotPassword = () => {
                   placeholder="Enter New Password"
                   onChange={(e) => setNewPassword(e.target.value)}
                   value={newPassword}
+                  required
                 />
                 <button
                   type="button"
@@ -238,6 +289,7 @@ const ForgotPassword = () => {
                   placeholder="Confirm Your Password"
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   value={confirmPassword}
+                  required
                 />
                 <button
                   type="button"
@@ -251,13 +303,18 @@ const ForgotPassword = () => {
 
             <button
               className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white font-semibold transition duration-200"
-              onClick={handleNewPassword}
+              onClick={handleResetPassword}
             >
               Reset Password
             </button>
+            {/* error display field(if any) */}
+            {err && (
+              <div className="mt-3 flex items-center justify-center gap-2 p-2 rounded-lg bg-red-100 border border-red-300 text-red-600 text-sm font-medium animate-fadeIn">
+                *{err}
+              </div>
+            )}
           </div>
         )}
-        
       </div>
     </div>
   );

@@ -5,6 +5,8 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { serverUrl } from "../App";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../firebase";
 
 const SignUp = () => {
   const primaryColor = "#ff4d2d";
@@ -19,6 +21,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
+  const [err, setErr] = useState("");
 
   const handleSignUp = async () => {
     try {
@@ -35,8 +38,39 @@ const SignUp = () => {
       );
 
       console.log(result);
+      setErr("");
     } catch (error) {
-      console.log("Sign Up failed:", error.response?.data);
+      setErr(error?.response?.data?.message);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    if (!mobile) {
+      return setErr("Mobile no is required");
+    }
+    const mobileRegex = /^[6-9]\d{9}$/; // starts with 6–9 and has exactly 10 digits
+    if (!mobileRegex.test(mobile)) {
+      return setErr("Please enter a valid 10-digit mobile number");
+    }
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    try {
+      const { data } = await axios.post(
+        `${serverUrl}/api/auth/google-auth`,
+        {
+          fullName: result.user.displayName,
+          email: result.user.email,
+          role,
+          mobile,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+      console.log(data);
+      setErr("");
+    } catch (error) {
+      setErr(error?.response?.data?.message);
     }
   };
 
@@ -74,6 +108,7 @@ const SignUp = () => {
             placeholder="Enter Your Full Name"
             onChange={(e) => setFullName(e.target.value)}
             value={fullName}
+            required
           />
         </div>
         {/* Email */}
@@ -90,6 +125,7 @@ const SignUp = () => {
             placeholder="Enter Your Email"
             onChange={(e) => setEmail(e.target.value)}
             value={email}
+            required
           />
         </div>
         {/* Mobile No */}
@@ -106,6 +142,7 @@ const SignUp = () => {
             placeholder="Enter Your Mobile Number"
             onChange={(e) => setMobile(e.target.value)}
             value={mobile}
+            required
           />
         </div>
         {/* Password */}
@@ -123,6 +160,7 @@ const SignUp = () => {
               placeholder="Enter Your Password"
               onChange={(e) => setPassword(e.target.value)}
               value={password}
+              required
             />
             <button
               className="absolute right-3 top-3.5 cursor-pointer
@@ -175,9 +213,19 @@ const SignUp = () => {
           Sign Up
         </button>
 
+        {/* error display field(if any) */}
+        {err && (
+          <div className="mt-3 flex items-center justify-center gap-2 p-2 rounded-lg bg-red-100 border border-red-300 text-red-600 text-sm font-medium animate-fadeIn">
+            *{err}
+          </div>
+        )}
+
         {/* For Google Sign Up */}
 
-        <button className="w-full mt-4 flex items-center justify-center gap-3 border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 font-medium shadow-sm hover:shadow-md hover:bg-gray-200 active:scale-95 transition-all duration-200">
+        <button
+          className="w-full mt-4 flex items-center justify-center gap-3 border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 font-medium shadow-sm hover:shadow-md hover:bg-gray-200 active:scale-95 transition-all duration-200"
+          onClick={handleGoogleSignUp}
+        >
           <FcGoogle size={25} />
           <span>Sign up with Google</span>
         </button>
@@ -188,7 +236,7 @@ const SignUp = () => {
             className="text-orange-500 font-semibold cursor-pointer hover:underline hover:text-orange-600 transition-colors ml-1"
             onClick={() => navigate("/signin")}
           >
-            Sign Up
+            Sign In
           </span>
         </p>
       </div>

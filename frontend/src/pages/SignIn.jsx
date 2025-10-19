@@ -5,6 +5,8 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { serverUrl } from "../App";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../firebase";
 
 const SignIn = () => {
   const primaryColor = "#ff4d2d";
@@ -18,6 +20,7 @@ const SignIn = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
 
   const handleSignIn = async () => {
     try {
@@ -25,14 +28,38 @@ const SignIn = () => {
         `${serverUrl}/api/auth/signin`,
         {
           email,
-          password
+          password,
         },
-        {  headers: { "Content-Type": "application/json" },withCredentials: true }
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
       );
 
       console.log(result);
+      setErr("");
     } catch (error) {
-      console.log("Sign In failed:", error.response?.data);
+      setErr(error?.response?.data?.message);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    try {
+      const { data } = await axios.post(
+        `${serverUrl}/api/auth/google-auth`,
+        {
+          email: result.user.email,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+      console.log(data);
+      setErr("");
+    } catch (error) {
+      setErr(error?.response?.data?.message);
     }
   };
 
@@ -69,6 +96,7 @@ const SignIn = () => {
             placeholder="Enter Your Email"
             onChange={(e) => setEmail(e.target.value)}
             value={email}
+            required
           />
         </div>
 
@@ -87,6 +115,7 @@ const SignIn = () => {
               placeholder="Enter Your Password"
               onChange={(e) => setPassword(e.target.value)}
               value={password}
+              required
             />
             <button
               className="absolute right-3 top-3.5 cursor-pointer
@@ -102,8 +131,10 @@ const SignIn = () => {
 
         {/* password reset div */}
         <div className="text-right mt-2">
-          <span className="text-orange-500 font-medium cursor-pointer hover:underline hover:text-orange-600 transition-colors duration-200"
-          onClick={()=>navigate("/forgot-password")}>
+          <span
+            className="text-orange-500 font-medium cursor-pointer hover:underline hover:text-orange-600 transition-colors duration-200"
+            onClick={() => navigate("/forgot-password")}
+          >
             Forgot Password?
           </span>
         </div>
@@ -116,9 +147,19 @@ const SignIn = () => {
           Sign In
         </button>
 
+        {/* error display field(if any) */}
+        {err && (
+          <div className="mt-3 flex items-center justify-center gap-2 p-2 rounded-lg bg-red-100 border border-red-300 text-red-600 text-sm font-medium animate-fadeIn">
+            *{err}
+          </div>
+        )}
+
         {/* For Google Sign Up */}
 
-        <button className="w-full mt-4 flex items-center justify-center gap-3 border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 font-medium shadow-sm hover:shadow-md hover:bg-gray-200 active:scale-95 transition-all duration-200">
+        <button
+          className="w-full mt-4 flex items-center justify-center gap-3 border border-gray-300 rounded-lg px-4 py-2 bg-white text-gray-700 font-medium shadow-sm hover:shadow-md hover:bg-gray-200 active:scale-95 transition-all duration-200"
+          onClick={handleGoogleSignIn}
+        >
           <FcGoogle size={25} />
           <span>Sign In with Google</span>
         </button>
@@ -129,7 +170,7 @@ const SignIn = () => {
             className="text-orange-500 font-semibold cursor-pointer hover:underline hover:text-orange-600 transition-colors ml-1"
             onClick={() => navigate("/signup")}
           >
-            Sign In
+            Sign Up
           </span>
         </p>
       </div>
