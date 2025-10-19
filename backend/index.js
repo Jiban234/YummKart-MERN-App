@@ -16,16 +16,8 @@ app.use(
 
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use((req, res, next) => {
-  console.log('Raw body check:', req.body);
-  // console.log('Content-Type:', req.headers['content-type']);
-  console.log('Method:', req.method);
-  console.log('URL:', req.url);
-  next();
-});
 
 
 const port = process.env.PORT || 5000;
