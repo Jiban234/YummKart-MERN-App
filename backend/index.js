@@ -5,6 +5,7 @@ import connectDb from "./config/db.js";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes.js";
 import cors from "cors";
+import userRouter from "./routes/user.routes.js";
 const app = express();
 
 app.use(
@@ -14,15 +15,13 @@ app.use(
   })
 );
 
-
 app.use(express.json());
 app.use(cookieParser());
-
-
 
 const port = process.env.PORT || 5000;
 
 app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
 app.listen(port, () => {
   connectDb();

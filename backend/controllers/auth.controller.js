@@ -80,6 +80,7 @@ export const signIn = async (req, res) => {
     }
 
     const token = generateToken(user._id);
+    console.log(token)
     
 
     res.cookie("token", token, {

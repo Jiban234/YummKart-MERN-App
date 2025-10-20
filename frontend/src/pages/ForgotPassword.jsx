@@ -5,6 +5,8 @@ import { FaRegEye } from "react-icons/fa";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { serverUrl } from "../App";
 import axios from "axios";
+import { ClipLoader } from "react-spinners";
+
 
 const ForgotPassword = () => {
   const [step, setStep] = useState(1);
@@ -17,9 +19,11 @@ const ForgotPassword = () => {
   const [err, setErr] = useState("");
   const inputRefs = useRef([]);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleSendOtp = async () => {
     try {
+      setLoading(true)
       const result = await axios.post(
         `${serverUrl}/api/auth/send-otp`,
         { email },
@@ -28,12 +32,15 @@ const ForgotPassword = () => {
       console.log(result);
       setErr("");
       setStep(2);
+      setLoading(false)
     } catch (error) {
       setErr(error?.response?.data?.message);
+      setLoading(false)
     }
   };
 
   const handleVerifyOtp = async () => {
+    setLoading(true)
     try {
       // Join the OTP array into a string
       const otpString = otp.join("");
@@ -45,8 +52,10 @@ const ForgotPassword = () => {
       console.log(result);
       setErr("");
       setStep(3);
+      setLoading(false)
     } catch (error) {
       setErr(error?.response?.data?.message);
+      setLoading(false)
     }
   };
 
@@ -54,6 +63,7 @@ const ForgotPassword = () => {
     if (newPassword !== confirmPassword) {
       return;
     }
+    setLoading(true)
     try {
       const result = await axios.post(
         `${serverUrl}/api/auth/reset-password`,
@@ -62,9 +72,11 @@ const ForgotPassword = () => {
       );
       console.log(result);
       setErr("");
+      setLoading(false)
       navigate("/signin");
     } catch (error) {
       setErr(error?.response?.data?.message);
+      setLoading(false)
     }
   };
 
@@ -122,8 +134,9 @@ const ForgotPassword = () => {
             <button
               className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white font-semibold transition duration-200"
               onClick={handleSendOtp}
+              disabled={loading}
             >
-              Send OTP
+              {loading? <ClipLoader size={20}/>:"Send OTP"}
             </button>
 
             {/* error display field(if any) */}
@@ -157,8 +170,9 @@ const ForgotPassword = () => {
             <button
               className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white font-semibold transition duration-200"
               onClick={handleVerifyOtp}
+              disabled={loading}
             >
-              Verify OTP
+              {loading? <ClipLoader size={20}/>:"Verify OTP"}
             </button>
           </div>
         )}
@@ -220,8 +234,9 @@ const ForgotPassword = () => {
             <button
               className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white font-semibold transition duration-200"
               onClick={handleResetPassword}
+              disabled={loading}
             >
-              Reset Password
+              {loading? <ClipLoader size={20}/>:"Reset Password"}
             </button>
             {/* error display field(if any) */}
             {err && (
