@@ -42,9 +42,10 @@ const SignIn = () => {
         }
       );
 
-      dispatch(setUserData(result.data))
+      dispatch(setUserData(result.data.user))
       setErr("");
       setLoading(false);
+      navigate("/"); // redirect immediately
     } catch (error) {
       setErr(error?.response?.data?.message);
       setLoading(false);
@@ -64,8 +65,9 @@ const SignIn = () => {
           withCredentials: true,
         }
       );
-      dispatch(setUserData(data))
+      dispatch(setUserData(data.user))
       setErr("");
+      navigate("/"); // redirect immediately
     } catch (error) {
       setErr(error?.response?.data?.message);
     }

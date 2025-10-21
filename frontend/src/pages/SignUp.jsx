@@ -43,7 +43,7 @@ const SignUp = () => {
         { withCredentials: true }
       );
 
-      dispatch(setUserData(result.data))
+      dispatch(setUserData(result.data.user))
       setErr("");
       setLoading(false);
     } catch (error) {
@@ -64,18 +64,16 @@ const SignUp = () => {
     try {
       const { data } = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
-        {
-          fullName: result.user.displayName,
+        {          
           email: result.user.email,
-          role,
-          mobile,
         },
         {
           withCredentials: true,
         }
       );
-      dispatch(setUserData(data))
+      dispatch(setUserData(data.user))
       setErr("");
+     
     } catch (error) {
       setErr(error?.response?.data?.message);
     }

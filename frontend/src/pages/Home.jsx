@@ -5,7 +5,7 @@ import OwnerDashboard from '../components/OwnerDashboard'
 import DeliveryBoyDashboard from '../components/DeliveryBoyDashboard'
 
 const Home = () => {
-    const {userData} = useSelector((state)=>state.user)
+    const {userData} = useSelector(state=>state.user)
     if (!userData) {
     return (
       <div className="w-screen h-screen flex items-center justify-center text-gray-700 text-lg">
