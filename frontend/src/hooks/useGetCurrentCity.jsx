@@ -1,9 +1,9 @@
 import axios from "axios";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setLocation } from "../redux/userSlice";
+import { setCity, setState } from "../redux/userSlice";
 
-const useGetCurrentLocation = () => {
+const useGetCurrentCity = () => {
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.user);
   const apiKey = import.meta.env.VITE_GEOAPI_KEY;
@@ -19,10 +19,12 @@ const useGetCurrentLocation = () => {
       const response = await axios.get(
         `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
       );
+      console.log(response)
 
-      dispatch(setLocation(response?.data?.results[0].city));
+      dispatch(setCity(response?.data?.results[0].city));
+      dispatch(setState(response?.data?.results[0].state));
     });
   }, [userData]);
 };
 
-export default useGetCurrentLocation;
+export default useGetCurrentCity;

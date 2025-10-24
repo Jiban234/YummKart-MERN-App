@@ -59,7 +59,10 @@ const SignIn = () => {
       const { data } = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
         {
+          fullName: result.user.displayName,
           email: result.user.email,
+          role,
+          mobile,
         },
         {
           withCredentials: true,

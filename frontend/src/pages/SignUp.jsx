@@ -26,7 +26,7 @@ const SignUp = () => {
   const [mobile, setMobile] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const handleSignUp = async () => {
     setLoading(true);
@@ -43,7 +43,7 @@ const SignUp = () => {
         { withCredentials: true }
       );
 
-      dispatch(setUserData(result.data.user))
+      dispatch(setUserData(result.data.user));
       setErr("");
       setLoading(false);
     } catch (error) {
@@ -64,16 +64,18 @@ const SignUp = () => {
     try {
       const { data } = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
-        {          
+        {
+          fullName: result.user.displayName,
           email: result.user.email,
+          role,
+          mobile,
         },
         {
           withCredentials: true,
         }
       );
-      dispatch(setUserData(data.user))
+      dispatch(setUserData(data.user));
       setErr("");
-     
     } catch (error) {
       setErr(error?.response?.data?.message);
     }
@@ -216,7 +218,7 @@ const SignUp = () => {
           onClick={handleSignUp}
           disabled={loading}
         >
-          {loading ? <ClipLoader size={20} color="white"/> : "Sign Up"}
+          {loading ? <ClipLoader size={20} color="white" /> : "Sign Up"}
         </button>
 
         {/* error display field(if any) */}
