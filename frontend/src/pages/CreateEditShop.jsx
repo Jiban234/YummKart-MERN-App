@@ -39,7 +39,7 @@ const CreateEditShop = () => {
       }
 
       const result = await axios.post(
-        `${serverUrl}/api/shop/create-edit`,
+        `${serverUrl}/api/shop/create-edit-shop`,
         formData,
         {
           withCredentials: true,
@@ -50,6 +50,7 @@ const CreateEditShop = () => {
       );
       // Update Redux store with the shop data from response
       dispatch(setMyShopData(result.data.shop));
+      navigate("/");
     } catch (error) {
       console.log(error.message);
     }
