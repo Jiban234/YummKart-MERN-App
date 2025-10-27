@@ -22,7 +22,7 @@ const OwnerDashboard = () => {
                 Add Your Restaurant
               </h2>
               <p className="text-gray-600">
-                Join our food delivery platforn and reach thousands of hungry customers everyday
+                Join our food delivery platform and reach thousands of hungry customers everyday
               </p>
 
               <button

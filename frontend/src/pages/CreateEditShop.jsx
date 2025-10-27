@@ -1,18 +1,66 @@
 import { IoIosArrowRoundBack } from "react-icons/io";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FaUtensils } from "react-icons/fa";
 import { useState } from "react";
+import axios from "axios";
+import { serverUrl } from "../App";
+import { setMyShopData } from "../redux/ownerSlice";
 
 const CreateEditShop = () => {
   const navigate = useNavigate();
-  const { myShopData } = useSelector((state) => state.owner);  
-  const { city, state } = useSelector((state) => state.owner);
-  const [name,setName] = useState(myShopData.name || "");
-  const [address,setAddress] = useState(myShopData?.address || "");
-  const [City,setCity] = useState(myShopData?.city || city);
-  const [State,setState] = useState(myShopData?.state || "");
-  
+  const { myShopData } = useSelector((state) => state.owner);
+  const { currentCity, currentState, currentAddress } = useSelector(
+    (state) => state.user
+  );
+  const [name, setName] = useState(myShopData?.name || "");
+  const [address, setAddress] = useState(myShopData?.address || currentAddress);
+  const [cityValue, setCityValue] = useState(myShopData?.city || currentCity);
+  const [stateValue, setStateValue] = useState(
+    myShopData?.state || currentState
+  );
+  const [frontEndImage, setFrontEndImage] = useState(myShopData?.image || null);
+  const [backEndImage, setBackEndImage] = useState(null);
+
+  const dispatch = useDispatch();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("city", cityValue);
+      formData.append("state", stateValue);
+      formData.append("address", address);
+
+      // Only append image if a new one was selected
+      if (backEndImage) {
+        formData.append("image", backEndImage);
+      }
+
+      const result = await axios.post(
+        `${serverUrl}/api/shop/create-edit`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      // Update Redux store with the shop data from response
+      dispatch(setMyShopData(result.data.shop));
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setBackEndImage(file);
+    setFrontEndImage(URL.createObjectURL(file));
+  };
+
   return (
     <div className="flex justify-center flex-col items-center p-6 bg-gradient-to-br from-orange-50 relative to-white min-h-screen ">
       <div
@@ -34,9 +82,8 @@ border-orange-100"
             {myShopData ? "Edit Restaurant" : "Add Restaurant"}
           </div>
         </div>
-        <form 
-        // onSubmit={handleSubmit} 
-        className="space-y-4">
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -44,9 +91,8 @@ border-orange-100"
             </label>
             <input
               type="text"
-            //   name="name"
-            //   value={formData.name}
-            //   onChange={handleChange}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Enter Restaurant Name"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
               required
@@ -61,22 +107,22 @@ border-orange-100"
             <input
               type="file"
               accept="image/*"
-            //   onChange={handleImageChange}
-            placeholder="choose file"
+              onChange={handleImageChange}
+              placeholder="choose file"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-[#ff4d2d] hover:file:bg-orange-100"
             />
           </div>
 
           {/* Image Preview */}
-          {/* {imagePreview && (
+          {frontEndImage && (
             <div className="mt-4">
               <img
-                src={imagePreview}
-                alt="Shop Preview"
+                src={frontEndImage}
+                alt="Restaurant Preview"
                 className="w-full h-48 object-cover rounded-lg border border-gray-200"
               />
             </div>
-          )} */}
+          )}
 
           {/* City and State Row */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -87,8 +133,8 @@ border-orange-100"
               <input
                 type="text"
                 // name="city"
-                // value={formData.city}
-                // onChange={handleChange}
+                value={cityValue}
+                onChange={(e) => setCityValue(e.target.value)}
                 placeholder="city"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
                 required
@@ -101,8 +147,8 @@ border-orange-100"
               <input
                 type="text"
                 // name="state"
-                // value={formData.state}
-                // onChange={handleChange}
+                value={stateValue}
+                onChange={(e) => setStateValue(e.target.value)}
                 placeholder="state"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
                 required
@@ -117,9 +163,9 @@ border-orange-100"
             </label>
             <input
               type="text"
-            //   name="address"
-            //   value={formData.address}
-            //   onChange={handleChange}
+              //   name="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
               placeholder="Enter address"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
               required

@@ -11,7 +11,7 @@ import { TbReceiptRupee } from "react-icons/tb";
 import axios from "axios";
 
 const Navbar = () => {
-  const { userData, city } = useSelector((state) => state.user);
+  const { userData, currentCity } = useSelector((state) => state.user);
   const { myShopData } = useSelector((state) => state.owner);
   const [showPopUp, setShowPopUp] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -38,7 +38,7 @@ const Navbar = () => {
           {/* City */}
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className="text-[#ff4d2d]" />
-            <div className="w-[80%] truncate text-gray-600">{city}</div>
+            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
           </div>
           {/* Search */}
           <div className="w-[80%] flex items-center gap-[10px]">
@@ -61,7 +61,7 @@ const Navbar = () => {
           {/* City */}
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className="text-[#ff4d2d]" />
-            <div className="w-[80%] truncate text-gray-600">{city}</div>
+            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
           </div>
           {/* Search */}
           <div className="w-[80%] flex items-center gap-[10px]">
