@@ -6,6 +6,7 @@ import { useState } from "react";
 import axios from "axios";
 import { serverUrl } from "../App";
 import { setMyShopData } from "../redux/ownerSlice";
+import { ClipLoader } from "react-spinners";
 
 const CreateEditShop = () => {
   const navigate = useNavigate();
@@ -21,11 +22,13 @@ const CreateEditShop = () => {
   );
   const [frontEndImage, setFrontEndImage] = useState(myShopData?.image || null);
   const [backEndImage, setBackEndImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append("name", name);
@@ -50,9 +53,11 @@ const CreateEditShop = () => {
       );
       // Update Redux store with the shop data from response
       dispatch(setMyShopData(result.data.shop));
+      setLoading(false);
       navigate("/");
     } catch (error) {
       console.log(error.message);
+      setLoading(false);
     }
   };
 
@@ -177,8 +182,9 @@ border-orange-100"
           <button
             type="submit"
             className="w-full bg-[#ff4d2d] hover:bg-[#e63e1e] text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300 mt-6"
+            disabled={loading}
           >
-            Save
+            {loading ? <ClipLoader size={20} color="white" /> : "Save"}
           </button>
         </form>
       </div>

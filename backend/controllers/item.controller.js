@@ -2,15 +2,9 @@ import Item from "../models/item.model.js";
 import Shop from "../models/shop.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 
-// add-item
+/* add-item */
 export const addItem = async (req, res) => {
   try {
-    console.log("=== ADD ITEM DEBUG ===");
-    console.log("req.userId:", req.userId);
-    console.log("req.body:", req.body);
-    console.log("req.file:", req.file);
-    console.log("======================");
-
     const { name, category, foodType, price } = req.body;
 
     // Validate required fields
@@ -31,12 +25,11 @@ export const addItem = async (req, res) => {
     }
 
     // Handle image upload
-    let image = "";
-    if (req.file) {
+    let image = ""; // Default to empty string
+    if (req.file && req.file.path) {
+      // Check if file AND path exist
       try {
-        console.log("Uploading item image...");
         image = await uploadOnCloudinary(req.file.path);
-        console.log("Image uploaded successfully:", image);
       } catch (uploadError) {
         console.error("Image upload failed:", uploadError);
         return res.status(500).json({
@@ -56,26 +49,24 @@ export const addItem = async (req, res) => {
       shop: shop._id,
     });
 
-    // Add item to shop
-    shop.items.push(item._id);
+    // Add item to the beginning of the array (most recent first) ✅
+    shop.items.unshift(item._id); // Changed from push to unshift
     await shop.save();
 
-    // Populate shop with items and owner
-    await shop.populate("items owner");
-
-    console.log("Item added successfully!");
+    // Manually populate items with sorting by createdAt ✅
+    const populatedShop = await Shop.findById(shop._id)
+      .populate({
+        path: "items",
+        options: { sort: { createdAt: -1 } }, // Sort by most recently created
+      })
+      .populate("owner");
 
     return res.status(201).json({
       success: true,
       message: "Item added successfully",
-      shop,
-      item, // Also return the created item
+      shop: populatedShop,
     });
   } catch (error) {
-    console.error("=== ADD ITEM ERROR ===");
-    console.error("Error:", error);
-    console.error("======================");
-    
     return res.status(500).json({
       success: false,
       message: `Add item error: ${error.message}`,
@@ -83,17 +74,18 @@ export const addItem = async (req, res) => {
   }
 };
 
-// edit-item
+/* edit-item */
 export const editItem = async (req, res) => {
   try {
-    console.log("=== EDIT ITEM DEBUG ===");
-    console.log("itemId:", req.params.itemId);
-    console.log("req.body:", req.body);
-    console.log("req.file:", req.file);
-    console.log("=======================");
-
     const itemId = req.params.itemId;
     const { name, category, foodType, price } = req.body;
+    // Validate itemId format
+    if (!itemId || !itemId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid item ID format",
+      });
+    }
 
     // Find existing item first
     const existingItem = await Item.findById(itemId);
@@ -105,7 +97,10 @@ export const editItem = async (req, res) => {
     }
 
     // Verify ownership (item's shop should belong to this user)
-    const shop = await Shop.findOne({ owner: req.userId, items: itemId });
+    const shop = await Shop.findOne({
+      owner: req.userId,
+      items: itemId,
+    });
     if (!shop) {
       return res.status(403).json({
         success: false,
@@ -122,14 +117,12 @@ export const editItem = async (req, res) => {
     };
 
     // Handle image upload
-    if (req.file) {
+    if (req.file && req.file.path) {
+      // Added path check ✅
       try {
-        console.log("Uploading new item image...");
         const image = await uploadOnCloudinary(req.file.path);
         updateData.image = image;
-        console.log("Image uploaded successfully:", image);
       } catch (uploadError) {
-        console.error("Image upload failed:", uploadError);
         return res.status(500).json({
           success: false,
           message: `Image upload failed: ${uploadError.message}`,
@@ -141,26 +134,130 @@ export const editItem = async (req, res) => {
     }
 
     // Update item
-    const item = await Item.findByIdAndUpdate(itemId, updateData, {
+    await Item.findByIdAndUpdate(itemId, updateData, {
       new: true,
       runValidators: true,
     });
 
-    console.log("Item updated successfully!");
+    // Populate owner first
+    await shop.populate("owner");
+
+    // Manually populate items with sorting by updatedAt ✅
+    const populatedShop = await Shop.findById(shop._id)
+      .populate({
+        path: "items",
+        options: { sort: { updatedAt: -1 } }, // Sort by most recently updated
+      })
+      .populate("owner");
 
     return res.status(200).json({
       success: true,
       message: "Item updated successfully",
-      item,
+      shop: populatedShop,
     });
   } catch (error) {
-    console.error("=== EDIT ITEM ERROR ===");
-    console.error("Error:", error);
-    console.error("=======================");
-    
     return res.status(500).json({
       success: false,
       message: `Item update error: ${error.message}`,
+    });
+  }
+};
+
+/* get-item-by-id */
+export const getItemById = async (req, res) => {
+  try {
+    const itemId = req.params.itemId;
+
+    // Validate itemId format
+    if (!itemId || !itemId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid item ID format",
+      });
+    }
+
+    const item = await Item.findById(itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Item retrieved successfully",
+      item,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `get-item error: ${error.message}`,
+    });
+  }
+};
+
+
+
+/* delete-item */
+export const deleteItem = async (req, res) => {
+  try {
+    const itemId = req.params.itemId;
+
+    // Validate itemId format
+    if (!itemId || !itemId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid item ID format",
+      });
+    }
+
+    // Find the item
+    const item = await Item.findById(itemId);
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    // Verify ownership (item's shop should belong to this user)
+    const shop = await Shop.findOne({ owner: req.userId, items: itemId });
+    if (!shop) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: This item doesn't belong to your shop",
+      });
+    }
+
+    // Remove item from shop's items array
+    shop.items = shop.items.filter(
+      (id) => id.toString() !== itemId.toString()
+    );
+    await shop.save();
+
+    // Delete the item
+    await Item.findByIdAndDelete(itemId);
+
+    // Populate shop with updated items and owner
+    const populatedShop = await Shop.findById(shop._id)
+      .populate({
+        path: "items",
+        options: { sort: { createdAt: -1 } }, // Keep sorting consistent
+      })
+      .populate("owner");
+
+    return res.status(200).json({
+      success: true,
+      message: "Item deleted successfully",
+      shop: populatedShop,
+    });
+  } catch (error) {
+    console.error("Delete item error:", error);
+    return res.status(500).json({
+      success: false,
+      message: `Delete item error: ${error.message}`,
     });
   }
 };

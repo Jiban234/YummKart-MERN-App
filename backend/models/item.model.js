@@ -8,7 +8,7 @@ const itemSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
+      default: "",
     },
     shop: {
       type: mongoose.Schema.Types.ObjectId,

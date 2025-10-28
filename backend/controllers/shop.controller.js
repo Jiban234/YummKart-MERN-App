@@ -91,8 +91,11 @@ export const getMyShop = async (req, res) => {
     }
 
     const shop = await Shop.findOne({ owner: req.userId }).populate(
-      "owner items"
-    );
+      {
+        path: "items",
+        options: { sort: { createdAt: -1 } }, // Sort by newest first ✅
+      })
+      .populate("owner");
 
     if (!shop) {
       return res.status(200).json({

@@ -17,7 +17,7 @@ const Navbar = () => {
   const [showPopUp, setShowPopUp] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleLogOut = async () => {
     try {
@@ -98,23 +98,31 @@ const Navbar = () => {
         {userData.role === "owner" ? (
           <div className="flex justify-center gap-2">
             {/* "Add Shop Item" button will only be visible if myShopData exists */}
-            {myShopData && (<>
-              <button onClick={() => navigate("/add-item")} className="hidden md:flex items-center gap-1 bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200">
-              <LuPlus size={18} />
-              <span>Add Food Items</span>
-            </button>
+            {myShopData && (
+              <>
+                <button
+                  onClick={() => navigate("/add-item")}
+                  className="hidden md:flex items-center gap-1 bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200"
+                >
+                  <LuPlus size={18} />
+                  <span>Add Food Items</span>
+                </button>
 
-            <button className="md:hidden flex items-center  bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200">
-              <LuPlus size={18} />
-            </button>
-            </>)}
-            
+                <button 
+                onClick={() => navigate("/add-item")}
+                className="md:hidden flex items-center  bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200">
+                  <LuPlus size={18} />
+                </button>
+              </>
+            )}
 
             {/* for pending orders - for owner*/}
             <div className="flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium">
-              <TbReceiptRupee size={20}/>
+              <TbReceiptRupee size={20} />
               <span className="hidden md:block">Pending Orders </span>
-              <span className="absolute -right-2 -top-2 text-xs font-bold text-white rounded-full bg-[#ff4d2d] px-[6px] py-[1px]">0</span>
+              <span className="absolute -right-2 -top-2 text-xs font-bold text-white rounded-full bg-[#ff4d2d] px-[6px] py-[1px]">
+                0
+              </span>
             </div>
           </div>
         ) : (
@@ -144,9 +152,12 @@ const Navbar = () => {
         {showPopUp && (
           <div className="fixed top-[80px] right-[10px] md:right-[10%] lg:right-[25%] w-[180px] bg-white shadow-2xl p-[20px] flex flex-col gap-[10px] z-[9999] rounded-lg ">
             <div className="text-[17px] font-semibold">{userData.fullName}</div>
-            <div className="md:hidden text-[#ff4d2d] font-semibold cursor-pointer">
-              My Orders
-            </div>
+            {userData.role === "user" && (
+              <div className="md:hidden text-[#ff4d2d] font-semibold cursor-pointer">
+                My Orders
+              </div>
+            )}
+
             <div
               className="text-[#ff4d2d] font-semibold cursor-pointer"
               onClick={handleLogOut}

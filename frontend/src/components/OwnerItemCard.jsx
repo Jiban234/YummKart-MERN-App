@@ -1,13 +1,37 @@
 import React from "react";
 import { FaUtensils, FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { setMyShopData } from "../redux/ownerSlice";
+import axios from "axios";
+import { serverUrl } from "../App";
+
 
 const OwnerItemCard = ({ item }) => {
   const navigate = useNavigate();
-  const handleDelete = ()=>{
-    
-  }
+  const dispatch = useDispatch();
+  // handler
+  const handleDelete = async() => {
+    try {
+      // Confirm before deleting
+    if (!window.confirm(`Are you sure you want to delete "${item.name}"?`)) {
+      return;
+    }
+      
+      const result = await axios.delete(
+        `${serverUrl}/api/item/delete-item/${item._id}`,
+        { withCredentials: true }
+      );
+
+      if (result.data.success) {
+        // Update Redux store with updated shop data
+        dispatch(setMyShopData(result.data.shop));
+      }
+    } catch (error) {
+      console.error("Delete item error:", error);
+    } 
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -29,7 +53,7 @@ const OwnerItemCard = ({ item }) => {
         <h3 className="font-semibold text-gray-800 text-lg mb-1">
           {item.name}
         </h3>
-        
+
         {item.description && (
           <p className="text-gray-600 text-sm mb-2 line-clamp-2">
             {item.description}
@@ -44,7 +68,13 @@ const OwnerItemCard = ({ item }) => {
             </span>
           )}
           {item.foodType && (
-            <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
+            <span
+              className={`text-xs px-2 py-1 rounded-full ${
+                item.foodType.toLowerCase() === "non-veg"
+                  ? "bg-red-100 text-red-600"
+                  : "bg-green-100 text-green-600"
+              }`}
+            >
               {item.foodType}
             </span>
           )}
@@ -52,30 +82,29 @@ const OwnerItemCard = ({ item }) => {
 
         {/* Price and Edit Button */}
         {/* Price and Edit/Delete Buttons */}
-<div className="flex justify-between items-center mt-3">
-  <p className="text-orange-500 font-bold text-xl">₹{item.price}</p>
+        <div className="flex justify-between items-center mt-3">
+          <p className="text-orange-500 font-bold text-xl">₹{item.price}</p>
 
-  <div className="flex gap-2">
-    {/* Edit Button */}
-    <button
-      onClick={() => navigate(`/edit-item/${item._id}`)}
-      className="flex items-center text-gray-600 hover:text-orange-500 transition-colors p-2 hover:bg-orange-50 rounded-lg cursor-pointer"
-      title="Edit Item"
-    >
-      <FaEdit size={20} />
-    </button>
+          <div className="flex gap-2">
+            {/* Edit Button */}
+            <button
+              onClick={() => navigate(`/edit-item/${item._id}`)}
+              className="flex items-center text-gray-600 hover:text-orange-500 transition-colors p-2 hover:bg-orange-50 rounded-lg cursor-pointer"
+              title="Edit Item"
+            >
+              <FaEdit size={20} />
+            </button>
 
-    {/* Delete Button */}
-    <button
-      onClick={() => handleDelete(item._id)} // <-- call your delete handler
-      className="flex items-center text-gray-600 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-lg cursor-pointer"
-      title="Delete Item"
-    >
-      <MdDelete size={20} />
-    </button>
-  </div>
-</div>
-
+            {/* Delete Button */}
+            <button
+              onClick={() => handleDelete(item._id)} // <-- call your delete handler
+              className="flex items-center text-gray-600 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-lg cursor-pointer"
+              title="Delete Item"
+            >
+              <MdDelete size={20} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
