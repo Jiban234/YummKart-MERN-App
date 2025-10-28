@@ -9,6 +9,7 @@ import { setUserData } from "../redux/userSlice";
 import { LuPlus } from "react-icons/lu";
 import { TbReceiptRupee } from "react-icons/tb";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const { userData, currentCity } = useSelector((state) => state.user);
@@ -16,6 +17,7 @@ const Navbar = () => {
   const [showPopUp, setShowPopUp] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate()
 
   const handleLogOut = async () => {
     try {
@@ -97,7 +99,7 @@ const Navbar = () => {
           <div className="flex justify-center gap-2">
             {/* "Add Shop Item" button will only be visible if myShopData exists */}
             {myShopData && (<>
-              <button className="hidden md:flex items-center gap-1 bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200">
+              <button onClick={() => navigate("/add-item")} className="hidden md:flex items-center gap-1 bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200">
               <LuPlus size={18} />
               <span>Add Food Items</span>
             </button>

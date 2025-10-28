@@ -7,13 +7,30 @@ const uploadOnCloudinary = async (file) => {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
+
   try {
-    const result = await cloudinary.uploader.upload(file);
-    fs.unlinkSync(file);
+    if (!file) {
+      throw new Error("No file provided for upload");
+    }
+
+    const result = await cloudinary.uploader.upload(file, {
+      resource_type: "auto",
+      folder: "restaurants", // Optional: organize uploads
+    });
+
+    // Delete local file after successful upload
+    if (fs.existsSync(file)) {
+      fs.unlinkSync(file);
+    }
+
     return result.secure_url;
   } catch (error) {
-    fs.unlinkSync(file);
-    console.log(error);
+    // Clean up local file even on error
+    if (file && fs.existsSync(file)) {
+      fs.unlinkSync(file);
+    }
+
+    throw new Error(`Cloudinary upload failed: ${error.message}`);
   }
 };
 

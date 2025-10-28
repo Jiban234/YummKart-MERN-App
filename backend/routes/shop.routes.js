@@ -14,6 +14,6 @@ shopRouter.post(
   upload.single("image"),
   createAndEditShop
 );
-shopRouter.post("/get-my-shop", isAuth, getMyShop);
+shopRouter.get("/get-my-shop", isAuth, getMyShop);
 
 export default shopRouter;

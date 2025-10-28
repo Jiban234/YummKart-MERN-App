@@ -4,11 +4,27 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 // New shop creation
 export const createAndEditShop = async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated. req.userId is missing.",
+      });
+    }
+
     const { name, city, state, address } = req.body;
 
-    // check if shop is already exist
-    // if already exists then update shop otherwise create new shop
+    // Validate required fields
+    if (!name || !city || !state || !address) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields (name, city, state, address) are required",
+      });
+    }
+
+    // Check if shop already exists
     let shop = await Shop.findOne({ owner: req.userId });
+
     // Prepare update object
     const updateData = {
       name,
@@ -17,21 +33,43 @@ export const createAndEditShop = async (req, res) => {
       address,
       owner: req.userId,
     };
+
     // Only update image if a new one was uploaded
     if (req.file) {
-      const image = await uploadOnCloudinary(req.file.path);
-      updateData.image = image;
-    }
-    if (!shop) {
-      shop = await Shop.create(updateData);
-    } else {
-      shop = await Shop.findByIdAndUpdate(shop._id, updateData, { new: true });
+      try {
+        const imageUrl = await uploadOnCloudinary(req.file.path);
+        updateData.image = imageUrl;
+      } catch (uploadError) {
+        return res.status(500).json({
+          success: false,
+          message: `Image upload failed: ${uploadError.message}`,
+        });
+      }
+    } else if (shop && shop.image) {
+      // Keep existing image if no new image was uploaded
+      updateData.image = shop.image;
     }
 
-    await shop.populate("owner");
+    let isNewShop = false;
+
+    if (!shop) {
+      shop = await Shop.create(updateData);
+      isNewShop = true;
+    } else {
+      shop = await Shop.findByIdAndUpdate(shop._id, updateData, {
+        new: true,
+        runValidators: true,
+      });
+    }
+
+    // Populate owner and items
+    shop = await shop.populate("owner items");
+
     return res.status(201).json({
       success: true,
-      message: shop ? "Shop Updated Successfully" : "Shop Created Successfully",
+      message: isNewShop
+        ? "Shop Created Successfully"
+        : "Shop Updated Successfully",
       shop,
     });
   } catch (error) {
@@ -42,27 +80,37 @@ export const createAndEditShop = async (req, res) => {
   }
 };
 
-//get-my-shop
+// Get my shop
 export const getMyShop = async (req, res) => {
   try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
     const shop = await Shop.findOne({ owner: req.userId }).populate(
       "owner items"
     );
+
     if (!shop) {
-      return res.status(404).json({
-        success: false,
-        message: "Shop not found",
+      return res.status(200).json({
+        success: true,
+        message: "No shop found for this user",
+        shop: null,
       });
     }
+
     return res.status(200).json({
       success: true,
-      message: "Shop Returned Successfully",
+      message: "Shop Retrieved Successfully",
       shop,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: `get-my-shop error : ${error.message}`,
+      message: `get-my-shop error: ${error.message}`,
     });
   }
 };

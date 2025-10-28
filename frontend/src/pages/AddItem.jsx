@@ -1,0 +1,205 @@
+import { IoIosArrowRoundBack } from "react-icons/io";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { FaUtensils } from "react-icons/fa";
+import { useState } from "react";
+import axios from "axios";
+import { serverUrl } from "../App";
+import { setMyShopData } from "../redux/ownerSlice";
+
+const AddItem = () => {
+  const navigate = useNavigate();
+  const { myShopData } = useSelector((state) => state.owner);
+  const { currentCity, currentState, currentAddress } = useSelector(
+    (state) => state.user
+  );
+
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState(0);
+  const [frontEndImage, setFrontEndImage] = useState(null);
+  const [backEndImage, setBackEndImage] = useState(null);
+  const [category, setCategory] = useState("");
+  const [foodType, setFoodType] = useState("veg");
+  const categories = [
+    "Snacks",
+    "Main Course",
+    "Desserts",
+    "Pizza",
+    "Burgers",
+    "Sandwiches",
+    "South Indian",
+    "North Indian",
+    "Chinese",
+    "Fast Food",
+    "Others",
+  ];
+
+  const dispatch = useDispatch();
+
+  // handlers
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("category", category);
+      formData.append("foodType", foodType);
+      formData.append("price", price);
+
+      // Only append image if a new one was selected
+      if (backEndImage) {
+        formData.append("image", backEndImage);
+      }
+
+      const result = await axios.post(
+        `${serverUrl}/api/item/add-item`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      // Update Redux store with the shop data from response
+      dispatch(setMyShopData(result.data.shop));
+      
+      navigate("/");
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setBackEndImage(file);
+    setFrontEndImage(URL.createObjectURL(file));
+  };
+
+  return (
+    <div className="flex justify-center flex-col items-center p-6 bg-gradient-to-br from-orange-50 relative to-white min-h-screen ">
+      <div
+        className="absolute top-[20px] left-[20px] z-[10] mb-[10px]"
+        onClick={() => navigate("/")}
+      >
+        <IoIosArrowRoundBack size={35} className="text-[#ff4d2d]" />
+      </div>
+
+      <div
+        className="max-w-lg w-full bg-white shadow-xl rounded-2xl p-8 border
+border-orange-100"
+      >
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
+            <FaUtensils className="text-2xl text-[#ff4d2d]" />
+          </div>
+          <div className="text-2xl font-bold text-gray-800">Add Food Items</div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter Item Name"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* Shop Image */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              required
+              onChange={handleImageChange}
+              placeholder="choose file"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-[#ff4d2d] hover:file:bg-orange-100"
+            />
+          </div>
+
+          {/* Image Preview */}
+          {frontEndImage && (
+            <div className="mt-4">
+              <img
+                src={frontEndImage}
+                alt="Restaurant Preview"
+                className="w-full h-48 object-cover rounded-lg border border-gray-200"
+              />
+            </div>
+          )}
+
+          {/* Price Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Price
+            </label>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Enter Item Price"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* Category Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
+              required
+            >
+              <option value="">Select Category</option>
+              {categories.map((cat, index) => (
+                <option key={index} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Food Type Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Food Type
+            </label>
+            <select
+              value={foodType}
+              onChange={(e) => setFoodType(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff4d2d] focus:border-transparent"
+              required
+            >
+              <option value="veg">veg</option>
+              <option value="non-veg">non-veg</option>
+            </select>
+          </div>
+
+          {/* Save Button */}
+          <button
+            type="submit"
+            className="w-full bg-[#ff4d2d] hover:bg-[#e63e1e] text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300 mt-6"
+          >
+            Save
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AddItem;
