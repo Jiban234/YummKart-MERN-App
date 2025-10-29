@@ -90,8 +90,8 @@ export const getMyShop = async (req, res) => {
       });
     }
 
-    const shop = await Shop.findOne({ owner: req.userId }).populate(
-      {
+    const shop = await Shop.findOne({ owner: req.userId })
+      .populate({
         path: "items",
         options: { sort: { createdAt: -1 } }, // Sort by newest first ✅
       })
@@ -114,6 +114,52 @@ export const getMyShop = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: `get-my-shop error: ${error.message}`,
+    });
+  }
+};
+
+// get-shop-by-city
+export const getShopByCity = async (req, res) => {
+  try {
+     
+    const { city } = req.params; // or req.query depending on your route setup
+
+    // Validate city parameter
+    if (!city) {
+      return res.status(400).json({
+        success: false,
+        message: "City parameter is required",
+      });
+    }
+
+    // Find shops in the specified city
+
+    const shops = await Shop.find({
+      city: { $regex: city, $options: "i" }, // Case-insensitive and partial search
+    })
+    .populate("items"); // Populate items details if needed
+    // .select("-__v"); // Exclude version key
+
+    // Check if shops found
+    if (!shops || shops.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `No shops found in ${city}`,
+      });
+    }
+
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      count: shops.length,
+      shops,
+    });
+  } catch (error) {
+    
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching shops",
+      error: error.message,
     });
   }
 };

@@ -198,8 +198,6 @@ export const getItemById = async (req, res) => {
   }
 };
 
-
-
 /* delete-item */
 export const deleteItem = async (req, res) => {
   try {
@@ -232,9 +230,7 @@ export const deleteItem = async (req, res) => {
     }
 
     // Remove item from shop's items array
-    shop.items = shop.items.filter(
-      (id) => id.toString() !== itemId.toString()
-    );
+    shop.items = shop.items.filter((id) => id.toString() !== itemId.toString());
     await shop.save();
 
     // Delete the item
@@ -254,10 +250,52 @@ export const deleteItem = async (req, res) => {
       shop: populatedShop,
     });
   } catch (error) {
-    console.error("Delete item error:", error);
+    
     return res.status(500).json({
       success: false,
       message: `Delete item error: ${error.message}`,
+    });
+  }
+};
+
+/* get-item-by-city */
+export const getItemByCity = async (req, res) => {
+  try {
+    const { city } = req.params;
+    if (!city) {
+      return res.status(404).json({
+        success: false,
+        message: "City is required",
+      });
+    }
+    // Find shops in the specified city
+
+    const shops = await Shop.find({
+      city: { $regex: city, $options: "i" }, // Case-insensitive and partial search
+    }).populate("items"); // Populate items details if needed
+    // .select("-__v"); // Exclude version key
+
+    // Check if shops found
+    if (!shops || shops.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `No shops found in ${city}`,
+      });
+    }
+
+    const shopIds = shops.map((shop)=>shop._id)
+
+    const items = await Item.find({shop:{$in:shopIds}})
+    return res.status(200).json({
+      success: true,
+      message: "Item deleted successfully",
+      items,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `get item by city error: ${error.message}`,
     });
   }
 };

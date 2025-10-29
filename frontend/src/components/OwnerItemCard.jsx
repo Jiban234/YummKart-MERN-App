@@ -80,7 +80,7 @@ const OwnerItemCard = ({ item }) => {
           )}
         </div>
 
-        {/* Price and Edit Button */}
+        
         {/* Price and Edit/Delete Buttons */}
         <div className="flex justify-between items-center mt-3">
           <p className="text-orange-500 font-bold text-xl">₹{item.price}</p>
