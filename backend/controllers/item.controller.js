@@ -263,16 +263,16 @@ export const getItemByCity = async (req, res) => {
   try {
     const { city } = req.params;
     if (!city) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
         message: "City is required",
       });
     }
-    // Find shops in the specified city
 
+    // Find shops in the specified city
     const shops = await Shop.find({
       city: { $regex: city, $options: "i" }, // Case-insensitive and partial search
-    }).populate("items"); // Populate items details if needed
+    }).populate("items") // Populate items details if needed
     // .select("-__v"); // Exclude version key
 
     // Check if shops found
@@ -283,9 +283,19 @@ export const getItemByCity = async (req, res) => {
       });
     }
 
+    // Extract shop IDs
     const shopIds = shops.map((shop)=>shop._id)
 
+     // Find all items from these shops
     const items = await Item.find({shop:{$in:shopIds}})
+
+    // Check if items found
+    if (!items || items.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `No items found in shops from ${city}`,
+      });
+    }
     return res.status(200).json({
       success: true,
       message: "Item deleted successfully",

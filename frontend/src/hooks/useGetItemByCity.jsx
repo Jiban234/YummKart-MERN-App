@@ -9,7 +9,11 @@ function useGetItemByCity() {
   const { currentCity } = useSelector((state) => state.user);
 
   useEffect(() => {
-    if (!currentCity) return; // Don't fetch if no city selected
+    // Don't fetch if no city selected
+    if (!currentCity){
+      dispatch(setItemInMyCity([]));
+      return;
+    }  
     const fetchItems = async () => {
       try {
         // URL encode the city name to handle spaces properly
@@ -23,7 +27,13 @@ function useGetItemByCity() {
         dispatch(setItemInMyCity(result.data.items));
         console.log(result.data.items);
       } catch (error) {
+        if (error.response?.status !== 401) {
+          console.error("Error fetching items by city:", error);
+          setError(error.response?.data?.message || "Failed to fetch items");
+        }
         console.log(error);
+        dispatch(setItemInMyCity([]));
+        
       }
     };
     fetchItems();

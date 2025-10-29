@@ -17,15 +17,14 @@ const SignIn = () => {
   const bgColor = "#fff9f6";
   const borderColor = "#ddd";
 
-  const [showPassword, setShowPassword] = useState(false);
-
   const navigate = useNavigate();
 
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const handleSignIn = async () => {
     setLoading(true);
@@ -42,7 +41,7 @@ const SignIn = () => {
         }
       );
 
-      dispatch(setUserData(result.data.user))
+      dispatch(setUserData(result.data.user));
       setErr("");
       setLoading(false);
       navigate("/"); // redirect immediately
@@ -53,22 +52,23 @@ const SignIn = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
+    
     try {
+      const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
       const { data } = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
         {
           fullName: result.user.displayName,
           email: result.user.email,
-          role,
-          mobile,
+          // role,
+          // mobile,
         },
         {
           withCredentials: true,
         }
       );
-      dispatch(setUserData(data.user))
+      dispatch(setUserData(data.user));
       setErr("");
       navigate("/"); // redirect immediately
     } catch (error) {

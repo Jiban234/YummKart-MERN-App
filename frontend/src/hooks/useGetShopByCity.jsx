@@ -9,7 +9,11 @@ function useGetShopByCity() {
   const { currentCity } = useSelector((state) => state.user);
 
   useEffect(() => {
-    if (!currentCity) return; // Don't fetch if no city selected
+    // Don't fetch if no city selected
+    if (!currentCity) {
+      dispatch(setShopInMyCity([]));
+      return;
+    } 
     const fetchShops = async () => {
       try {
         // URL encode the city name to handle spaces properly
@@ -22,7 +26,12 @@ function useGetShopByCity() {
         );
         dispatch(setShopInMyCity(result.data.shops));
       } catch (error) {
+        if (error.response?.status !== 401) {
+          console.error("Error fetching shops by city:", error);
+          setError(error.response?.data?.message || "Failed to fetch shops");
+        }
         console.log(error);
+        dispatch(setShopInMyCity([]));
       }
     };
     fetchShops();

@@ -27,7 +27,7 @@ const userSlice = createSlice({
       state.shopInMyCity = action.payload;
     },
     setItemInMyCity: (state, action) => {
-      state.shopInMyCity = action.payload;
+      state.itemInMyCity = action.payload;
     },
   },
 });
