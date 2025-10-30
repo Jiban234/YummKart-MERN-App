@@ -39,8 +39,8 @@ const UserDashboard = () => {
   };
 
   useEffect(() => {
-    const cateElement = categoryScrollRef.current;
-    const shopElement = shopScrollRef.current;
+    const cateElement = categoryScrollRef?.current;
+    const shopElement = shopScrollRef?.current;
 
     // Initial check to show/hide buttons on mount
     updateButton(

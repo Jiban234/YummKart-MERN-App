@@ -25,7 +25,6 @@ function useGetItemByCity() {
           }
         );
         dispatch(setItemInMyCity(result.data.items));
-        console.log(result.data.items);
       } catch (error) {
         if (error.response?.status !== 401) {
           console.error("Error fetching items by city:", error);

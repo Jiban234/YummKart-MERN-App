@@ -12,7 +12,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const { userData, currentCity } = useSelector((state) => state.user);
+  const { userData, currentCity, cartItems, totalQuantity } = useSelector((state) => state.user);
   const { myShopData } = useSelector((state) => state.owner);
   const [showPopUp, setShowPopUp] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -127,10 +127,11 @@ const Navbar = () => {
           </div>
         ) : (
           <div className="flex gap-2">
-            <div className="relative cursor-pointer flex items-center justify-center">
+            <div className="relative cursor-pointer flex items-center justify-center"
+            onClick={()=>navigate("/cart")}>
               <FiShoppingCart size={28} className="text-[#ff4d2d]" />
               <span className="absolute -right-2 -top-2 text-xs font-bold text-white rounded-full bg-[#ff4d2d] px-[6px] py-[1px]">
-                0
+                {totalQuantity}
               </span>
             </div>
 
