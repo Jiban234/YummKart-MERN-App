@@ -23,16 +23,6 @@ function useGetMyShop() {
           dispatch(setMyShopData(result.data.shop));
         }
       } catch (error) {
-        // Silently handle 401 (not authorized) and 404 (no shop found)
-        if (error.response?.status !== 401 && error.response?.status !== 404) {
-          console.error("Error fetching my shop:", error);
-        }
-        
-        // If 404, user just doesn't have a shop yet - this is normal
-        if (error.response?.status === 404) {
-          console.log("No shop found for this user");
-        }
-        console.log(error);
         dispatch(setMyShopData(null));
       }
     };

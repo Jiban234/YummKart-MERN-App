@@ -10,6 +10,7 @@ import "leaflet/dist/leaflet.css";
 import { setAddress, setLocation } from "../redux/mapSlice";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { serverUrl } from "../App";
 
 function RecenterMap({ location }) {
   const map = useMap();
@@ -28,20 +29,20 @@ const CheckOut = () => {
   const { cartItems } = useSelector((state) => state.user);
   const [addressInput, setAddressInput] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
-  const [deliveryFee] = useState(40);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const apiKey = import.meta.env.VITE_GEOAPI_KEY;
 
   const calculateSubtotal = () => {
-    return cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
+  //subtotal
   const subtotal = calculateSubtotal();
+
+  //delivery charges
+  const deliveryFee = subtotal > 499 ? 0 : 40;
 
   // handlers
   const onDragEnd = (e) => {
@@ -91,8 +92,28 @@ const CheckOut = () => {
   };
 
   const handlePlaceOrder = async () => {
-    // Add your place order logic here
-    console.log("Order placed");
+    try {
+      const result = await axios.post(
+        `${serverUrl}/api/order/place-order`,
+        {
+          paymentMethod,
+          deliveryAddress: {
+            text: addressInput,
+            latitude: location.lat,
+            longitude: location.lon,
+          },
+          totalAmount: subtotal,
+          cartItems,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      navigate("/order-placed");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
@@ -223,9 +244,7 @@ const CheckOut = () => {
                 <h3 className="font-semibold text-sm text-gray-800">
                   UPI / Credit / Debit Card
                 </h3>
-                <p className="text-xs text-gray-500">
-                  Pay securely online
-                </p>
+                <p className="text-xs text-gray-500">Pay securely online</p>
               </div>
             </div>
           </div>
@@ -237,14 +256,11 @@ const CheckOut = () => {
             Order Summary
           </h2>
 
-          <div className="border-2 border-gray-300 rounded-xl p-5 space-y-3">
+          <div className="border-2 border-gray-800 rounded-xl p-5 space-y-3">
             {/* Cart Items */}
             {cartItems && cartItems.length > 0 ? (
               cartItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center"
-                >
+                <div key={index} className="flex justify-between items-center">
                   <span className="text-gray-700 text-sm">
                     {item.name} × {item.quantity}
                   </span>
@@ -263,7 +279,9 @@ const CheckOut = () => {
             <div className="border-t-2 border-gray-200 pt-3 space-y-2.5">
               {/* Subtotal */}
               <div className="flex justify-between items-center">
-                <span className="text-gray-800 font-semibold text-sm">Subtotal</span>
+                <span className="text-gray-800 font-semibold text-sm">
+                  Subtotal
+                </span>
                 <span className="text-gray-800 font-semibold text-sm">
                   ₹{subtotal.toFixed(2)}
                 </span>
@@ -272,7 +290,9 @@ const CheckOut = () => {
               {/* Delivery Fee */}
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 text-sm">Delivery Fee</span>
-                <span className="text-gray-800 text-sm">₹{deliveryFee}</span>
+                <span className="text-gray-800 text-sm">
+                  ₹{deliveryFee == 0 ? "Free" : deliveryFee}
+                </span>
               </div>
 
               {/* Total */}
@@ -291,7 +311,7 @@ const CheckOut = () => {
           onClick={handlePlaceOrder}
           className="w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white font-semibold py-4 rounded-xl transition-colors text-xl shadow-md hover:shadow-lg"
         >
-          Place Order
+          {paymentMethod === "cod" ? "Place Order" : "Proceed to Payment"}
         </button>
       </div>
     </div>

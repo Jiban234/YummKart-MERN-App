@@ -13,10 +13,10 @@ function useGetShopByCity() {
     if (!currentCity) {
       dispatch(setShopInMyCity([]));
       return;
-    } 
+    }
+
     const fetchShops = async () => {
       try {
-        // URL encode the city name to handle spaces properly
         const encodedCity = encodeURIComponent(currentCity);
         const result = await axios.get(
           `${serverUrl}/api/shop/get-shop-by-city/${encodedCity}`,
@@ -26,11 +26,7 @@ function useGetShopByCity() {
         );
         dispatch(setShopInMyCity(result.data.shops));
       } catch (error) {
-        if (error.response?.status !== 401) {
-          console.error("Error fetching shops by city:", error);
-          setError(error.response?.data?.message || "Failed to fetch shops");
-        }
-        console.log(error);
+        // Silently handle network errors
         dispatch(setShopInMyCity([]));
       }
     };

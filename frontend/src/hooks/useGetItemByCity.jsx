@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import { serverUrl } from "../App";
 import { useDispatch, useSelector } from "react-redux";
-import { setItemInMyCity, setShopInMyCity } from "../redux/userSlice";
+import { setItemInMyCity } from "../redux/userSlice";
 
 function useGetItemByCity() {
   const dispatch = useDispatch();
@@ -10,13 +10,13 @@ function useGetItemByCity() {
 
   useEffect(() => {
     // Don't fetch if no city selected
-    if (!currentCity){
+    if (!currentCity) {
       dispatch(setItemInMyCity([]));
       return;
-    }  
+    }
+
     const fetchItems = async () => {
       try {
-        // URL encode the city name to handle spaces properly
         const encodedCity = encodeURIComponent(currentCity);
         const result = await axios.get(
           `${serverUrl}/api/item/get-item-by-city/${encodedCity}`,
@@ -26,13 +26,8 @@ function useGetItemByCity() {
         );
         dispatch(setItemInMyCity(result.data.items));
       } catch (error) {
-        if (error.response?.status !== 401) {
-          console.error("Error fetching items by city:", error);
-          setError(error.response?.data?.message || "Failed to fetch items");
-        }
-        console.log(error);
+        // Silently handle network errors
         dispatch(setItemInMyCity([]));
-        
       }
     };
     fetchItems();

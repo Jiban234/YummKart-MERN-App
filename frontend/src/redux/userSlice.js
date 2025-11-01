@@ -11,6 +11,7 @@ const userSlice = createSlice({
     itemInMyCity: null,
     cartItems: [],
     totalQuantity: 0, // Total number of items (not unique items)
+    myOrders: null,
   },
   reducers: {
     setUserData: (state, action) => {
@@ -38,7 +39,7 @@ const userSlice = createSlice({
       if (existingItem) {
         // Update quantity (can be +1 or -1)
         existingItem.quantity += cartItem.quantity;
-        
+
         // Remove item if quantity becomes 0
         if (existingItem.quantity <= 0) {
           state.cartItems = state.cartItems.filter((i) => i.id !== cartItem.id);
@@ -55,8 +56,6 @@ const userSlice = createSlice({
         (sum, item) => sum + item.quantity,
         0
       );
-
-      
     },
     removeFromCart: (state, action) => {
       state.cartItems = state.cartItems.filter((i) => i.id !== action.payload);

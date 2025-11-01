@@ -15,13 +15,7 @@ function useGetCurrentUser() {
         });
         dispatch(setUserData(result.data.user));
       } catch (error) {
-        // Only log errors that aren't 401 (user not authenticated)
-        if (error.response?.status !== 401) {
-          console.error("Error fetching current user:", error);
-          setError(error.response?.data?.message || "Failed to fetch user");
-        }
-        // Clear user data on error
-        console.log(error);
+        // Silently handle network errors and auth errors
         dispatch(setUserData(null));
       }
     };
