@@ -1,5 +1,5 @@
 import express from "express";
-import { getOwnerOrders, placeOrder } from "../controllers/order.controller.js";
+import { getMyOrders, placeOrder } from "../controllers/order.controller.js";
 import isAuth from "../middlewares/isAuth.js";
 const orderRouter = express.Router();
 
@@ -8,12 +8,9 @@ orderRouter.post(
   isAuth,placeOrder
 );
 orderRouter.get(
-  "/user-orders",
-  isAuth,getOwnerOrders
+  "/my-orders",
+  isAuth,getMyOrders
 );
-orderRouter.post(
-  "/owner-orders",
-  isAuth,getOwnerOrders
-);
+
 
 export default orderRouter;

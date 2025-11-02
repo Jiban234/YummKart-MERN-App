@@ -109,7 +109,7 @@ const FoodCard = ({ data }) => {
           </h3>
 
           {/* Shop Name */}
-          <p className="text-xs text-gray-500 mt-1 truncate">
+          <p className="text-xs font-bold text-gray-500 mt-1 truncate">
             {data.shop?.name || "Restaurant"}
           </p>
 

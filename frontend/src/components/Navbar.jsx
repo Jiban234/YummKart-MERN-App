@@ -12,7 +12,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const { userData, currentCity, cartItems, totalQuantity } = useSelector((state) => state.user);
+  const { userData, currentCity, cartItems, totalQuantity } = useSelector(
+    (state) => state.user
+  );
   const { myShopData } = useSelector((state) => state.owner);
   const [showPopUp, setShowPopUp] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -108,16 +110,20 @@ const Navbar = () => {
                   <span>Add Food Items</span>
                 </button>
 
-                <button 
-                onClick={() => navigate("/add-item")}
-                className="md:hidden flex items-center  bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200">
+                <button
+                  onClick={() => navigate("/add-item")}
+                  className="md:hidden flex items-center  bg-[#ff4d2d]/10 text-[#ff4d2d] p-2 rounded-full font-medium hover:bg-[#ff4d2d]/20 shadow-md transition-all duration-200"
+                >
                   <LuPlus size={18} />
                 </button>
               </>
             )}
 
             {/* for pending orders - for owner*/}
-            <div className="flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium">
+            <div
+              onClick={() => navigate("/my-orders")}
+              className="flex items-center gap-2 cursor-pointer relative px-3 py-1 rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium"
+            >
               <TbReceiptRupee size={20} />
               <span className="hidden md:block">Pending Orders </span>
               <span className="absolute -right-2 -top-2 text-xs font-bold text-white rounded-full bg-[#ff4d2d] px-[6px] py-[1px]">
@@ -127,15 +133,20 @@ const Navbar = () => {
           </div>
         ) : (
           <div className="flex gap-2">
-            <div className="relative cursor-pointer flex items-center justify-center"
-            onClick={()=>navigate("/cart")}>
+            <div
+              className="relative cursor-pointer flex items-center justify-center"
+              onClick={() => navigate("/cart")}
+            >
               <FiShoppingCart size={28} className="text-[#ff4d2d]" />
               <span className="absolute -right-2 -top-2 text-xs font-bold text-white rounded-full bg-[#ff4d2d] px-[6px] py-[1px]">
                 {totalQuantity}
               </span>
             </div>
 
-            <button className="hidden md:block px-4 py-2 rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium hover:bg-[#ff4d2d]/20 transition-all duration-200 cursor-pointer">
+            <button
+              className="hidden md:block px-4 py-2 rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d] font-medium hover:bg-[#ff4d2d]/20 transition-all duration-200 cursor-pointer"
+              onClick={() => navigate("/my-orders")}
+            >
               My Orders
             </button>
           </div>
@@ -154,7 +165,10 @@ const Navbar = () => {
           <div className="fixed top-[80px] right-[10px] md:right-[10%] lg:right-[25%] w-[180px] bg-white shadow-2xl p-[20px] flex flex-col gap-[10px] z-[9999] rounded-lg ">
             <div className="text-[17px] font-semibold">{userData.fullName}</div>
             {userData.role === "user" && (
-              <div className="md:hidden text-[#ff4d2d] font-semibold cursor-pointer">
+              <div
+                className="md:hidden text-[#ff4d2d] font-semibold cursor-pointer"
+                onClick={() => navigate("/my-orders")}
+              >
                 My Orders
               </div>
             )}

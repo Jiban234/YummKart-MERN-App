@@ -92,29 +92,33 @@ const CheckOut = () => {
   };
 
   const handlePlaceOrder = async () => {
-    try {
-      const result = await axios.post(
-        `${serverUrl}/api/order/place-order`,
-        {
-          paymentMethod,
-          deliveryAddress: {
-            text: addressInput,
-            latitude: location.lat,
-            longitude: location.lon,
-          },
-          totalAmount: subtotal,
-          cartItems,
+  try {
+    const result = await axios.post(
+      `${serverUrl}/api/order/place-order`,
+      {
+        paymentMethod,
+        deliveryAddress: {
+          text: addressInput,
+          latitude: location.lat,
+          longitude: location.lon,
         },
-        {
-          withCredentials: true,
-        }
-      );
+        totalAmount: subtotal + deliveryFee,  // Fixed: Include delivery fee
+        cartItems,
+      },
+      {
+        withCredentials: true,
+      }
+    );
 
+    if (result.data.success) {
       navigate("/order-placed");
-    } catch (error) {
-      console.log(error);
     }
-  };
+  } catch (error) {
+    console.error("Order placement error:", error);
+    alert(error.response?.data?.message || "Failed to place order. Please try again.");
+  }
+};
+
 
   useEffect(() => {
     setAddressInput(address);
