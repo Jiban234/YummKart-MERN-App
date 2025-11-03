@@ -11,7 +11,7 @@ const userSlice = createSlice({
     itemInMyCity: null,
     cartItems: [],
     totalQuantity: 0, // Total number of items (not unique items)
-    myOrders: null,
+    myOrders: [],
   },
   reducers: {
     setUserData: (state, action) => {
@@ -72,6 +72,42 @@ const userSlice = createSlice({
     setMyOrders: (state, action) => {
       state.myOrders = action.payload;
     },
+    addMyOrders: (state, action) => {
+      state.myOrders = [action.payload, ...state.myOrders];
+    },
+    // updateStatus: (state, action) => {
+    //   const { orderId, shopId, status } = action.payload;
+    //   const order = state.myOrders.find(
+    //     (o) => o._id.toString() === orderId.toString()
+    //   );
+
+    //   if (order) {
+    //     if (
+    //       order.shopOrders &&
+    //       order.shopOrders.shop._id.toString() === shopId.toString()
+    //     ) {
+    //       order.shopOrders.status = status;
+    //     }
+    //   }
+    // },
+
+    updateStatus: (state, action) => {
+      const { orderId, shopId, status } = action.payload;
+
+      const order = state.myOrders.find(
+        (o) => o._id.toString() === orderId.toString()
+      );
+
+      if (order && Array.isArray(order.shopOrders)) {
+        const shopOrder = order.shopOrders.find(
+          (so) => so.shop._id.toString() === shopId.toString()
+        );
+
+        if (shopOrder) {
+          shopOrder.status = status;
+        }
+      }
+    },
   },
 });
 
@@ -85,6 +121,8 @@ export const {
   addToCart,
   removeFromCart,
   clearCart,
-  setMyOrders
+  setMyOrders,
+  addMyOrders,
+  updateStatus,
 } = userSlice.actions;
 export default userSlice.reducer;

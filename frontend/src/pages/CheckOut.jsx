@@ -11,6 +11,7 @@ import { setAddress, setLocation } from "../redux/mapSlice";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { serverUrl } from "../App";
+import { addMyOrders } from "../redux/userSlice";
 
 function RecenterMap({ location }) {
   const map = useMap();
@@ -109,6 +110,7 @@ const CheckOut = () => {
         withCredentials: true,
       }
     );
+    dispatch(addMyOrders(result.data.newOrder))
 
     if (result.data.success) {
       navigate("/order-placed");

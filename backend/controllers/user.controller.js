@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 
+// Get User Data
 export const getCurrentUser = async (req, res) => {
   try {
     const userId = req.userId;
@@ -17,6 +18,8 @@ export const getCurrentUser = async (req, res) => {
       });
     }
     return res.status(200).json({
+      success: true,
+      message: "User found",
       user,
     });
   } catch (error) {
@@ -24,6 +27,32 @@ export const getCurrentUser = async (req, res) => {
       success: false,
       message: "Internal Server Error",
       error: error.message,
+    });
+  }
+};
+
+// update-user-location
+export const updateUserLocation = async (req, res) => {
+  try {
+    const { lat, lon } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      {
+        location: {
+          type: "Point",
+          coordinates: [lon, lat],
+        },
+      },
+      { new: true }
+    );
+    return res.status(200).json({
+      success: true,
+      message: "user location updated successfully"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `update user location error ${error}`
     });
   }
 };

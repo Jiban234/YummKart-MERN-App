@@ -31,19 +31,30 @@ const userSchema = new mongoose.Schema(
       required: true,
       enum: ["user", "owner", "deliveryBoy"],
     },
-    resetOtp:{
-      type:String
+    resetOtp: {
+      type: String,
     },
-    isOtpVerified:{
+    isOtpVerified: {
       type: Boolean,
-      default:false
+      default: false,
     },
-    otpExpires:{
-      type:Date,
-    }
+    otpExpires: {
+      type: Date,
+    },
+    location: {
+      type: { type: String, enum: ["Point"], default: "Point" },
+      coordinates: {
+        type: [Number],
+        default: [0, 0],
+      },
+    },
   },
   { timestamps: true }
 );
+
+userSchema.index({
+  location: "2dsphere",
+});
 
 const User = mongoose.model("User", userSchema);
 

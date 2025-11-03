@@ -1,5 +1,5 @@
 import express from "express";
-import { getMyOrders, placeOrder } from "../controllers/order.controller.js";
+import { getMyOrders, placeOrder, updateOrderStatus } from "../controllers/order.controller.js";
 import isAuth from "../middlewares/isAuth.js";
 const orderRouter = express.Router();
 
@@ -10,6 +10,10 @@ orderRouter.post(
 orderRouter.get(
   "/my-orders",
   isAuth,getMyOrders
+);
+orderRouter.post(
+  "/update-status/:orderId/:shopId",
+  isAuth,updateOrderStatus
 );
 
 
