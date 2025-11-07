@@ -94,14 +94,22 @@ const userSlice = createSlice({
     updateStatus: (state, action) => {
       const { orderId, shopId, status } = action.payload;
 
-      const order = state.myOrders.find(
+      const order = state.myOrders?.find(
         (o) => o._id.toString() === orderId.toString()
       );
 
       if (order && Array.isArray(order.shopOrders)) {
-        const shopOrder = order.shopOrders.find(
-          (so) => so.shop._id.toString() === shopId.toString()
-        );
+        // const shopOrder = order.shopOrders.find(
+        //   (so) => so.shop._id.toString() === shopId.toString()
+        // );
+
+        const shopOrder = order.shopOrders.find((so) => {
+          if (!so.shop) return false;
+          return (
+            (so.shop._id?.toString?.() || so.shop.toString?.()) ===
+            shopId.toString()
+          );
+        });
 
         if (shopOrder) {
           shopOrder.status = status;

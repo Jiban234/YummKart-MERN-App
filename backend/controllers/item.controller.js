@@ -277,9 +277,10 @@ export const getItemByCity = async (req, res) => {
 
     // Check if shops found
     if (!shops || shops.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         message: `No shops found in ${city}`,
+        items: [],
       });
     }
 
@@ -291,9 +292,10 @@ export const getItemByCity = async (req, res) => {
 
     // Check if items found
     if (!items || items.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         message: `No items found in shops from ${city}`,
+        items: [],
       });
     }
     return res.status(200).json({

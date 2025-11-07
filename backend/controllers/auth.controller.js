@@ -43,10 +43,13 @@ export const signUp = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
     });
+
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user.toObject();
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
-      user,
+      user: userWithoutPassword,
     });
   } catch (error) {
     return res.status(500).json({

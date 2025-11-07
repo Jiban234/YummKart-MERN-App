@@ -1,28 +1,36 @@
-import React, { useState } from "react";
+import React from "react";
 import { FaPhoneAlt, FaMapMarkerAlt } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import axios from "axios";
 import { serverUrl } from "../App";
 import { useDispatch } from "react-redux";
 import { updateStatus } from "../redux/userSlice";
+import { useState } from "react";
 
 const OwnerOrderCard = ({ data }) => {
+  const [availableBoys, setAvailableBoys] = useState([]);
   const dispatch = useDispatch();
 
   // No need to filter - backend already returns only owner's shop orders
   // If shopOrders is empty, don't render
   if (!data.shopOrders || data.shopOrders.length === 0) return null;
 
-  const handleStatusChange = async (orderId, shopId, newStatus) => {
+  const handleUpdateStatus = async (orderId, shopId, newStatus) => {
     try {
       const result = await axios.post(
         `${serverUrl}/api/order/update-status/${orderId}/${shopId}`,
         { status: newStatus },
         { withCredentials: true }
       );
-      dispatch(updateStatus({ orderId, shopId, status: newStatus }));
+
+      if (result.data.success) {
+        dispatch(updateStatus({ orderId, shopId, status: newStatus }));
+      }
+      setAvailableBoys(result.data.availableBoys);
+      console.log(result.data);
     } catch (error) {
       console.error("Status update error:", error);
+      alert("Failed to update status. Please try again.");
     }
   };
 
@@ -116,41 +124,43 @@ const OwnerOrderCard = ({ data }) => {
               {/* Status Dropdown or Display */}
               <div className="flex items-center gap-3">
                 <span className="text-gray-700 font-medium">status:</span>
-                {/* ✅ Always show status text */}
-                <span
-                  className={`${getStatusColor(
-                    shopOrder.status
-                  )} font-semibold capitalize text-lg`}
-                >
-                  {shopOrder.status}
-                </span>
-                {/* If already delivered, just show it (no dropdown) */}
+
+                {/* If delivered, show only text (no dropdown) */}
                 {shopOrder.status === "delivered" ? (
-                  <span className="text-green-600 font-semibold capitalize">
+                  <span className="text-green-600 font-semibold capitalize text-lg">
                     Delivered
                   </span>
                 ) : (
-                  <select
-                    defaultValue=""
-                    onChange={(e) =>
-                      handleStatusChange(
-                        data._id,
-                        shopOrder.shop._id,
-                        e.target.value
-                      )
-                    }
-                    className={`${getStatusColor(
-                      shopOrder.status
-                    )} font-semibold border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer capitalize`}
-                  >
-                    <option value="" disabled>Change Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="preparing">Preparing</option>
-                    <option value="out of delivery">Out Of Delivery</option>
-                    {/* Delivered option removed - owner can't mark as delivered */}
-                  </select>
+                  /* Show current status + dropdown to change */
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`${getStatusColor(
+                        shopOrder.status
+                      )} font-semibold capitalize`}
+                    >
+                      {shopOrder.status}
+                    </span>
+                    <select
+                      value={shopOrder.status}
+                      onChange={(e) =>
+                        handleUpdateStatus(
+                          data._id,
+                          shopOrder.shop._id,
+                          e.target.value
+                        )
+                      }
+                      className="font-medium border-2 border-orange-400 text-orange-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="preparing">Preparing</option>
+                      <option value="out of delivery">Out Of Delivery</option>
+                    </select>
+                  </div>
                 )}
               </div>
+
+              
+
 
               {/* Total */}
               <div className="text-right">
@@ -159,6 +169,22 @@ const OwnerOrderCard = ({ data }) => {
                 </p>
               </div>
             </div>
+
+                {shopOrder.status === "out of delivery" && (
+  <div className="mt-3 p-2 border rounded-lg text-sm bg-orange-50">
+    <p>Available Delivery Boys:</p>
+    {availableBoys.length > 0 ? (
+      availableBoys.map((b, index) => (
+        <div key={b._id || index} className="text-gray-600">
+          {b.fullName} - {b.mobile}
+        </div>
+      ))
+    ) : (
+      <div>Waiting for delivery boy to accept</div>
+    )}
+  </div>
+)}
+
           </div>
         ))}
       </div>

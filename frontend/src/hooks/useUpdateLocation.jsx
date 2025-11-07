@@ -13,13 +13,20 @@ const useUpdateLocation = () => {
   const dispatch = useDispatch();
   const { userData } = useSelector((state) => state.user);
   useEffect(() => {
-    const updateLocation = async (lat,lon) => {
-      const result = await axios.post(
-        `${serverUrl}/api/user/update-location`,
-        { lat, lon },
-        { withCredentials: true }
-      );
-      console.log(result.data);
+    const updateLocation = async (lat, lon) => {
+      try {
+        const result = await axios.post(
+          `${serverUrl}/api/user/update-location`,
+          { lat, lon },
+          { withCredentials: true }
+        );
+        console.log(result.data);
+      } catch (error) {
+        console.error(
+          "Update location error:",
+          error.response?.data || error.message
+        );
+      }
     };
 
     navigator.geolocation.watchPosition((pos) => {

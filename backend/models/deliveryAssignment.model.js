@@ -20,7 +20,7 @@ const deliveryAssignmentSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    assignTo: {
+    assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,

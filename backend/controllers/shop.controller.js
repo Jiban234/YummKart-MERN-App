@@ -142,9 +142,10 @@ export const getShopByCity = async (req, res) => {
 
     // Check if shops found
     if (!shops || shops.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         message: `No shops found in ${city}`,
+        shops: []
       });
     }
 
