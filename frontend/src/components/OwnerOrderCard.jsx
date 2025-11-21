@@ -159,9 +159,6 @@ const OwnerOrderCard = ({ data }) => {
                 )}
               </div>
 
-              
-
-
               {/* Total */}
               <div className="text-right">
                 <p className="text-2xl font-bold text-gray-800">
@@ -170,21 +167,26 @@ const OwnerOrderCard = ({ data }) => {
               </div>
             </div>
 
-                {shopOrder.status === "out of delivery" && (
-  <div className="mt-3 p-2 border rounded-lg text-sm bg-orange-50">
-    <p>Available Delivery Boys:</p>
-    {availableBoys.length > 0 ? (
-      availableBoys.map((b, index) => (
-        <div key={b._id || index} className="text-gray-600">
-          {b.fullName} - {b.mobile}
-        </div>
-      ))
-    ) : (
-      <div>Waiting for delivery boy to accept</div>
-    )}
-  </div>
-)}
-
+            {shopOrder.status === "out of delivery" && (
+              <div className="mt-3 p-2 border rounded-lg text-sm bg-orange-50">
+                <p className="font-semibold">
+                  {shopOrder.assignedDeliveryBoy
+                    ? "Assigned Delivery Boy:"
+                    : "Available Delivery Boys:"}
+                </p>
+                {availableBoys.length > 0 ? (
+                  availableBoys.map((b, index) => (
+                    <div key={b._id || index} className="text-gray-600">
+                      {b.fullName} - {b.mobile}
+                    </div>
+                  ))
+                ) : shopOrder.assignedDeliveryBoy ? (
+                  <div>{shopOrder.assignedDeliveryBoy.fullName} - {shopOrder.assignedDeliveryBoy.mobile}</div>
+                ) : (
+                  <div>Waiting for delivery boy to accept</div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

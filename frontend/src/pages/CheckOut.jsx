@@ -27,7 +27,7 @@ function RecenterMap({ location }) {
 
 const CheckOut = () => {
   const { location, address } = useSelector((state) => state.map);
-  const { cartItems } = useSelector((state) => state.user);
+  const { cartItems, userData } = useSelector((state) => state.user);
   const [addressInput, setAddressInput] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
@@ -64,17 +64,11 @@ const CheckOut = () => {
   };
 
   const getCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        dispatch(setLocation({ lat: latitude, lon: longitude }));
-        getAddressByLatLng(latitude, longitude);
-      },
-      (error) => {
-        console.log("Error getting location:", error);
-      }
-    );
+    const latitude = userData.location.coordinates[1];
+    const longitude = userData.location.coordinates[0];
+
+    dispatch(setLocation({ lat: latitude, lon: longitude }));
+    getAddressByLatLng(latitude, longitude);
   };
 
   const getLatLngByAddress = async () => {
@@ -93,34 +87,36 @@ const CheckOut = () => {
   };
 
   const handlePlaceOrder = async () => {
-  try {
-    const result = await axios.post(
-      `${serverUrl}/api/order/place-order`,
-      {
-        paymentMethod,
-        deliveryAddress: {
-          text: addressInput,
-          latitude: location.lat,
-          longitude: location.lon,
+    try {
+      const result = await axios.post(
+        `${serverUrl}/api/order/place-order`,
+        {
+          paymentMethod,
+          deliveryAddress: {
+            text: addressInput,
+            latitude: location.lat,
+            longitude: location.lon,
+          },
+          totalAmount: subtotal + deliveryFee, // Fixed: Include delivery fee
+          cartItems,
         },
-        totalAmount: subtotal + deliveryFee,  // Fixed: Include delivery fee
-        cartItems,
-      },
-      {
-        withCredentials: true,
+        {
+          withCredentials: true,
+        }
+      );
+      dispatch(addMyOrders(result.data.newOrder));
+
+      if (result.data.success) {
+        navigate("/order-placed");
       }
-    );
-    dispatch(addMyOrders(result.data.newOrder))
-
-    if (result.data.success) {
-      navigate("/order-placed");
+    } catch (error) {
+      console.error("Order placement error:", error);
+      alert(
+        error.response?.data?.message ||
+          "Failed to place order. Please try again."
+      );
     }
-  } catch (error) {
-    console.error("Order placement error:", error);
-    alert(error.response?.data?.message || "Failed to place order. Please try again.");
-  }
-};
-
+  };
 
   useEffect(() => {
     setAddressInput(address);

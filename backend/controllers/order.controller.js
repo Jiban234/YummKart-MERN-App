@@ -2,6 +2,9 @@ import DeliveryAssignment from "../models/deliveryAssignment.model.js";
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
+import { sendDeliveryOtpEmail } from "../utils/mail.js";
+import { response } from "express";
 
 // place order
 export const placeOrder = async (req, res) => {
@@ -124,7 +127,8 @@ export const getMyOrders = async (req, res) => {
         .populate("shopOrders.shop", "name")
         .populate("shopOrders.owner", "name email mobile")
         .populate("user", "fullName email mobile")
-        .populate("shopOrders.shopOrderItems.item", "name image price");
+        .populate("shopOrders.shopOrderItems.item", "name image price")
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
       // Filter to only include owner's shop orders in each order
       const filteredOrders = orders.map((order) => ({
@@ -294,8 +298,6 @@ export const updateOrderStatus = async (req, res) => {
     );
     await order.populate("shopOrders.assignment"); // ADD THIS LINE
 
-    
-
     return res.status(200).json({
       success: true,
       message: "Status updated successfully",
@@ -310,6 +312,343 @@ export const updateOrderStatus = async (req, res) => {
       success: false,
       message: `Update status error: ${error.message}`,
       error: error.stack,
+    });
+  }
+};
+
+// get deliveryBoy assignment
+export const getDeliveryBoyAssignment = async (req, res) => {
+  try {
+    const deliveryBoyId = req.userId;
+
+    // Validate deliveryBoyId
+    if (!deliveryBoyId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: Delivery boy ID not found",
+      });
+    }
+    const assignments = await DeliveryAssignment.find({
+      broadcastedTo: deliveryBoyId,
+      status: "broadcasted",
+    })
+      .populate("order")
+      .populate("shop");
+
+    // Format assignments with proper error handling
+    // const formatted = assignments.map((a) => ({
+    //   assignmentId: a._id,
+    //   orderId: a.order._id,
+    //   shopName: a.shop.name,
+    //   deliveryAddress: a.order.deliveryAddress,
+    //   items:
+    //     a.order.shopOrders.find((so) => so._id == a.shopOrderId)
+    //       .shopOrderItems || [],
+    //   subtotal: a.order.shopOrders.find((so) => so._id == a.shopOrderId)
+    //     ?.subtotal,
+    // }));
+
+    const formatted = assignments
+      .filter((a) => a.order && a.shop) // Filter out invalid assignments
+      .map((a) => {
+        // Find the specific shop order once
+        const shopOrder = a.order.shopOrders?.find(
+          (so) => so._id.toString() === a.shopOrderId.toString()
+        );
+
+        return {
+          assignmentId: a._id,
+          orderId: a.order._id,
+          shopName: a.shop.name,
+          deliveryAddress: a.order.deliveryAddress,
+          items: shopOrder?.shopOrderItems || [],
+          subtotal: shopOrder?.subtotal || 0,
+        };
+      });
+
+    return res.status(200).json({
+      success: true,
+      data: formatted,
+    });
+  } catch (error) {
+    console.error("Get delivery assignment error:", error);
+    return res.status(500).json({
+      success: false,
+      message: `get delivery assignment error: ${error.message}`,
+    });
+  }
+};
+
+// const accept order
+export const acceptOrder = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+
+    const assignment = await DeliveryAssignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: "Assignment not found",
+      });
+    }
+
+    if (assignment.status !== "broadcasted") {
+      return res.status(400).json({
+        success: false,
+        message: "Assignment is no longer available",
+      });
+    }
+
+    const alreadyAssigned = await DeliveryAssignment.findOne({
+      assignedTo: req.userId,
+      status: { $nin: ["broadcasted", "completed"] },
+    });
+
+    if (alreadyAssigned) {
+      return res.status(400).json({
+        success: false,
+        message: "You are already assigned to another order",
+      });
+    }
+
+    // Update assignment
+    assignment.assignedTo = req.userId;
+    assignment.status = "assigned";
+    assignment.acceptedAt = new Date();
+    await assignment.save();
+
+    // Update order
+    const order = await Order.findById(assignment.order);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const shopOrder = order.shopOrders.find(
+      (so) => so._id.toString() === assignment.shopOrderId.toString()
+    );
+
+    if (!shopOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop order not found in order",
+      });
+    }
+
+    shopOrder.assignedDeliveryBoy = req.userId;
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order accepted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Accept order error: ${error.message}`,
+    });
+  }
+};
+
+// get current order
+export const getCurrentOrder = async (req, res) => {
+  try {
+    const assignment = await DeliveryAssignment.findOne({
+      assignedTo: req.userId,
+      status: "assigned",
+    })
+      .populate("shop", "name items")
+      .populate("assignedTo", "fullName email mobile location")
+      .populate({
+        path: "order",
+        populate: [{ path: "user", select: "fullName email location mobile" }],
+      });
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: "No active assignment found",
+      });
+    }
+    if (!assignment.order) {
+      return res.status(404).json({
+        success: false,
+        message: "order not found",
+      });
+    }
+
+    const shopOrder = assignment.order.shopOrders.find(
+      (so) => so._id.toString() === assignment.shopOrderId.toString()
+    );
+
+    if (!shopOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop order not found",
+      });
+    }
+
+    // Safe extraction of delivery boy location
+    let deliveryBoyLocation = { lat: null, lon: null };
+    if (
+      assignment.assignedTo?.location?.coordinates &&
+      assignment.assignedTo.location.coordinates.length === 2
+    ) {
+      deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
+      deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
+    }
+
+    // Safe extraction of customer location
+    let customerLocation = { lat: null, lon: null };
+    if (assignment.order.deliveryAddress) {
+      customerLocation.lat = assignment.order.deliveryAddress.latitude;
+      customerLocation.lon = assignment.order.deliveryAddress.longitude;
+    }
+    return res.status(200).json({
+      success: true,
+      data: {
+        _id: assignment.order._id,
+        user: assignment.order.user,
+        shopOrder,
+        deliveryAddress: assignment.order.deliveryAddress,
+        deliveryBoyLocation,
+        customerLocation,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Accept order error: ${error.message}`,
+    });
+  }
+};
+
+// get order by Id
+export const getOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID format",
+      });
+    }
+    const order = await Order.findById(orderId)
+      .populate("user")
+      .populate({
+        path: "shopOrders.shop",
+        model: "Shop",
+      })
+      .populate({
+        path: "shopOrders.assignedDeliveryBoy",
+        model: "User",
+      })
+      .populate({
+        path: "shopOrders.shopOrderItems.item",
+        model: "Item",
+      })
+      .lean();
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order retrieved successfully",
+      order,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Get order by ID error: ${error.message}`,
+    });
+  }
+};
+
+// send delivery OTP
+export const sendDeliveryOtp = async (req, res) => {
+  try {
+    const { orderId, shopOrderId } = req.body;
+    const order = await Order.findById(orderId).populate("user");
+    const shopOrder = order.shopOrders.id(shopOrderId);
+    if (!order || !shopOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "enter valid order or shoporder",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    shopOrder.deliveryOtp = otp;
+    shopOrder.otpExpires = Date.now() + 5 * 60 * 1000;
+    await order.save();
+
+    await sendDeliveryOtpEmail(order.user, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: `Otp sent successfully to ${order?.user?.fullName}`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `send delivery otp error: ${error.message}`,
+    });
+  }
+};
+
+// verify delivery OTP
+export const verifyDeliveryOtp = async (req, res) => {
+  try {
+    const { orderId, shopOrderId, otp } = req.body;
+    const order = await Order.findById(orderId).populate("user");
+    const shopOrder = order.shopOrders.id(shopOrderId);
+    if (!order || !shopOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Enter valid order or shoporder",
+      });
+    }
+
+    if (
+      shopOrder.deliveryOtp !== otp ||
+      !shopOrder.otpExpires ||
+      shopOrder.otpExpires < Date.now()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP",
+      });
+    }
+    // Mark as delivered
+    shopOrder.status = "delivered";
+    shopOrder.deliveredAt = Date.now();
+    shopOrder.deliveryOtp = null; // Clear OTP
+    shopOrder.otpExpires = null; // Clear expiry
+    await order.save();
+
+    // Delete the assignment
+    await DeliveryAssignment.deleteOne({
+      shopOrderId: shopOrder._id,
+      order: order._id,
+      assignedTo: shopOrder.assignedDeliveryBoy,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Order delivered successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Verify delivery OTP error: ${error.message}`,
     });
   }
 };

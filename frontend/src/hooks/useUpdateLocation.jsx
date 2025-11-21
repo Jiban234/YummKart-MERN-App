@@ -20,7 +20,7 @@ const useUpdateLocation = () => {
           { lat, lon },
           { withCredentials: true }
         );
-        console.log(result.data);
+        console.log(`Updated Location ${result.data}`);
       } catch (error) {
         console.error(
           "Update location error:",

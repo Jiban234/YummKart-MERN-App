@@ -250,7 +250,6 @@ export const deleteItem = async (req, res) => {
       shop: populatedShop,
     });
   } catch (error) {
-    
     return res.status(500).json({
       success: false,
       message: `Delete item error: ${error.message}`,
@@ -272,7 +271,7 @@ export const getItemByCity = async (req, res) => {
     // Find shops in the specified city
     const shops = await Shop.find({
       city: { $regex: city, $options: "i" }, // Case-insensitive and partial search
-    }).populate("items") // Populate items details if needed
+    }).populate("items"); // Populate items details if needed
     // .select("-__v"); // Exclude version key
 
     // Check if shops found
@@ -285,10 +284,13 @@ export const getItemByCity = async (req, res) => {
     }
 
     // Extract shop IDs
-    const shopIds = shops.map((shop)=>shop._id)
+    const shopIds = shops.map((shop) => shop._id);
 
-     // Find all items from these shops
-    const items = await Item.find({shop:{$in:shopIds}}).populate("shop", "name");
+    // Find all items from these shops
+    const items = await Item.find({ shop: { $in: shopIds } }).populate(
+      "shop",
+      "name"
+    );
 
     // Check if items found
     if (!items || items.length === 0) {
@@ -303,11 +305,78 @@ export const getItemByCity = async (req, res) => {
       message: "Item deleted successfully",
       items,
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: `get item by city error: ${error.message}`,
     });
   }
+};
+
+// get item by shop
+export const getItemsByShop = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    const shop = await Shop.findById(shopId).populate("items");
+    if (!shop) {
+      return res.status(404).json({
+        success: false,
+        message: `Shop not found`,
+      });
+    }
+    return res.status(200).json({
+      shop,
+      items: shop.items,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `get item by shop error: ${error.message}`,
+    });
+  }
+};
+
+// search
+export const searchItem = async (req, res) => {
+  try {
+    const { query, city } = req.query;
+    if (!query || !city) {
+      return null;
+    }
+
+    // Find shops in the specified city
+
+    const shops = await Shop.find({
+      city: { $regex: city, $options: "i" }, // Case-insensitive and partial search
+    })
+      .populate("items") // Populate items details if needed
+      .select("-__v"); // Exclude version key
+
+    // Check if shops found
+    if (!shops || shops.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: `No shops found in ${city}`,
+        shops: [],
+      });
+    }
+
+    const shopIds = shops.map((s) => s._id);
+    const items = await Item.find({
+      shop: { $in: shopIds },
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { category: { $regex: query, $options: "i" } },
+      ],
+    }).populate("shop","name image");
+
+
+    return res.status({
+      success:true,
+      items
+    })
+  } catch (error) {return res.status(500).json({
+      success: false,
+      message: `search item error: ${error.message}`,
+    });}
 };
