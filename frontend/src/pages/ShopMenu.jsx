@@ -22,7 +22,7 @@ const ShopMenu = () => {
           withCredentials: true,
         }
       );
-      console.log(response.data)
+      console.log(response.data);
       setShop(response.data.shop);
       setItems(response.data.items);
       console.log(response.data);
@@ -58,11 +58,11 @@ const ShopMenu = () => {
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-          
+
           {/* Back Button */}
           <button
             onClick={() => navigate("/")}
-            className="absolute top-4 left-4 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105"
+            className="absolute top-20 left-4 bg-black/60 backdrop-blur-sm hover:bg-black/80 text-white p-3 rounded-full shadow-2xl transition-all duration-200 hover:scale-105 z-10 border-2 border-white/20"
           >
             <FaArrowLeft className="text-xl" />
           </button>
@@ -72,7 +72,9 @@ const ShopMenu = () => {
             <h1 className="text-4xl font-bold mb-2">{shop?.name}</h1>
             <div className="flex items-center gap-2 text-lg">
               <FaMapMarkerAlt />
-              <span>{shop?.city}, {shop?.state}</span>
+              <span>
+                {shop?.city}, {shop?.state}
+              </span>
             </div>
           </div>
         </div>
@@ -85,7 +87,7 @@ const ShopMenu = () => {
             🍽️ Our Menu
           </h1>
           <span className="text-gray-600 font-medium">
-            {items?.length} item{items?.length !== 1 ? 's' : ''} available
+            {items?.length} item{items?.length !== 1 ? "s" : ""} available
           </span>
         </div>
 
@@ -98,8 +100,12 @@ const ShopMenu = () => {
         ) : (
           <div className="w-full flex flex-col items-center justify-center py-20">
             <div className="text-6xl mb-4">🍽️</div>
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">No items available</h2>
-            <p className="text-gray-500 mb-4">This restaurant hasn't added any items yet</p>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+              No items available
+            </h2>
+            <p className="text-gray-500 mb-4">
+              This restaurant hasn't added any items yet
+            </p>
             <button
               onClick={() => navigate("/")}
               className="bg-[#ff4d2d] hover:bg-[#e63e1f] text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"

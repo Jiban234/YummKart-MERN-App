@@ -4,7 +4,15 @@ import Shop from "../models/shop.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import { sendDeliveryOtpEmail } from "../utils/mail.js";
-import { response } from "express";
+import Razorpay from "razorpay";
+import dotenv from "dotenv";
+dotenv.config();
+
+// Razorpay Instance
+let instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 // place order
 export const placeOrder = async (req, res) => {
@@ -71,7 +79,33 @@ export const placeOrder = async (req, res) => {
       })
     );
 
-    // Create order
+    // for online-payment
+    if (paymentMethod === "online") {
+      const razorOrder = await instance.orders.create({
+        amount: Math.round(totalAmount * 100),
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+      });
+
+      const newOrder = await Order.create({
+        user: req.userId,
+        paymentMethod,
+        deliveryAddress,
+        totalAmount,
+        shopOrders,
+        razorpayOrderId: razorOrder.id,
+        payment: false,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Order Placed Successfully with online payment",
+        razorOrder,
+        orderId: newOrder._id,
+      });
+    }
+
+    // Create order for cash-on-delivery
     const newOrder = await Order.create({
       user: req.userId,
       paymentMethod,
@@ -96,6 +130,46 @@ export const placeOrder = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: `Place order error: ${error.message}`,
+    });
+  }
+};
+
+// verify payment
+export const verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_payment_id, orderId } = req.body;
+    const payment = await instance.payments.fetch(razorpay_payment_id);
+    if (!payment || payment.status !== "captured") {
+      return res.status(400).json({
+        success: false,
+        message: `payment not captured`,
+      });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(400).json({
+        success: false,
+        message: `Order not found`,
+      });
+    }
+
+    order.payment = true;
+    order.razorpayPaymentId = razorpay_payment_id;
+    await order.save();
+
+    await order.populate("shopOrders.shopOrderItems.item", "name image price");
+    await order.populate("shopOrders.shop", "name");
+
+    return res.status(200).json({
+      success: true,
+      message: `Payment verified`,
+      order,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Verify payment error: ${error.message}`,
     });
   }
 };
@@ -140,6 +214,7 @@ export const getMyOrders = async (req, res) => {
           (o) => o.owner._id.toString() === req.userId
         ),
         createdAt: order.createdAt,
+        payment: order.payment,
       }));
 
       return res.status(200).json({

@@ -39,10 +39,31 @@ const UserOrderCard = ({ data }) => {
             Date: {formatDate(data.createdAt)}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-gray-600 uppercase">{data.paymentMethod}</p>
-          <p className="text-blue-600 font-semibold">pending</p>
-        </div>
+        <div className="text-right flex flex-col items-end gap-1">
+  {data.paymentMethod === "online" ? (
+    <>
+      <p className="text-sm text-gray-600 uppercase font-semibold">
+        Payment Method: Online
+      </p>
+
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-semibold
+          ${
+            data.payment
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+      >
+        {data.payment ? "Paid" : "Unpaid"}
+      </span>
+    </>
+  ) : (
+    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+      COD
+    </span>
+  )}
+</div>
+
       </div>
 
       {/* Shop Orders */}

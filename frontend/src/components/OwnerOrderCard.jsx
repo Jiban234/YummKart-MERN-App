@@ -62,9 +62,32 @@ const OwnerOrderCard = ({ data }) => {
             <span className="text-sm">{data.user.email}</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <FaPhoneAlt className="text-gray-500" size={16} />
-            <span className="text-sm">{data.user.mobile}</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <FaPhoneAlt className="text-gray-500" size={16} />
+              <p className="text-sm">{data.user.mobile}</p>
+            </div>
+
+            {data.paymentMethod === "online" ? (
+              <>
+                <p className="text-sm font-semibold">Payment Method: Online</p>
+
+                <span
+                  className={`w-fit px-2 py-0.5 rounded-full text-xs font-semibold
+          ${
+            data.payment
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+                >
+                  {data.payment ? "Paid" : "Unpaid"}
+                </span>
+              </>
+            ) : (
+              <span className="w-fit px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                COD
+              </span>
+            )}
           </div>
         </div>
 
@@ -181,7 +204,10 @@ const OwnerOrderCard = ({ data }) => {
                     </div>
                   ))
                 ) : shopOrder.assignedDeliveryBoy ? (
-                  <div>{shopOrder.assignedDeliveryBoy.fullName} - {shopOrder.assignedDeliveryBoy.mobile}</div>
+                  <div>
+                    {shopOrder.assignedDeliveryBoy.fullName} -{" "}
+                    {shopOrder.assignedDeliveryBoy.mobile}
+                  </div>
                 ) : (
                   <div>Waiting for delivery boy to accept</div>
                 )}

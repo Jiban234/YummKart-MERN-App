@@ -10,8 +10,10 @@ import shopRouter from "./routes/shop.routes.js";
 import itemRouter from "./routes/item.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import searchRouter from "./routes/search.routes.js";
+import http from "http";
 
 const app = express();
+const server = http.createServer(app);
 
 app.use(
   cors({
@@ -40,7 +42,7 @@ const port = process.env.PORT || 5000;
 
 // 🟢 FIX: Connect to DB *first*, then start server
 connectDb().then(() => {
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.log(`🚀 Server running on port : ${port}`);
   });
 });
