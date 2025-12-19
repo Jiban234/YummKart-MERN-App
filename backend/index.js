@@ -11,9 +11,25 @@ import itemRouter from "./routes/item.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import searchRouter from "./routes/search.routes.js";
 import http from "http";
+import { Server } from "socket.io";
+import { socketHandler } from "./socket.js";
+
 
 const app = express();
 const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["POST", "GET"],
+  },
+});
+
+// Initialize socket handler
+socketHandler(io);
+
+app.set("io", io);
 
 app.use(
   cors({
@@ -40,9 +56,10 @@ app.use("/api/search", searchRouter);
 
 const port = process.env.PORT || 5000;
 
-// 🟢 FIX: Connect to DB *first*, then start server
 connectDb().then(() => {
   server.listen(port, () => {
-    console.log(`🚀 Server running on port : ${port}`);
+    console.log(`🚀 Server running on port: ${port}`);
   });
 });
+
+// export { io }; // Export io for use in controllers

@@ -135,10 +135,6 @@
 // } = userSlice.actions;
 // export default userSlice.reducer;
 
-
-
-
-
 import { createSlice } from "@reduxjs/toolkit";
 
 const userSlice = createSlice({
@@ -153,6 +149,7 @@ const userSlice = createSlice({
     cartItems: [],
     totalQuantity: 0,
     myOrders: [],
+    socket: null,
     // Search state
     searchQuery: "",
     searchedShops: [],
@@ -178,7 +175,10 @@ const userSlice = createSlice({
     setItemInMyCity: (state, action) => {
       state.itemInMyCity = action.payload;
     },
-    
+    setSocket: (state, action) => {
+      state.socket = action.payload;
+    },
+
     // Search reducers
     setSearchQuery: (state, action) => {
       state.searchQuery = action.payload;
@@ -281,6 +281,7 @@ export const {
   setMyOrders,
   addMyOrders,
   updateStatus,
+  setSocket,
 } = userSlice.actions;
 
 export default userSlice.reducer;

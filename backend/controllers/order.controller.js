@@ -114,11 +114,122 @@ export const placeOrder = async (req, res) => {
       shopOrders,
     });
 
+    // await newOrder.populate(
+    //   "shopOrders.shopOrderItems.item",
+    //   "name image price"
+    // );
+    // await newOrder.populate("shopOrders.shop", "name");
+    // await newOrder.populate("shopOrders.owner", "fullName socketId");
+    // await newOrder.populate("user", "fullName email mobile");
+
+    // Populate order details
     await newOrder.populate(
       "shopOrders.shopOrderItems.item",
       "name image price"
     );
     await newOrder.populate("shopOrders.shop", "name");
+    await newOrder.populate("shopOrders.owner", "fullName email mobile");
+    await newOrder.populate("user", "fullName email mobile");
+
+    // Emit socket event to shop owners
+    //     const io = req.app.get("io");
+    //     if (io) {
+    //       // Get unique owner IDs to avoid duplicate notifications
+    //       const notifiedOwners = new Set();
+
+    //       newOrder.shopOrders.forEach((shopOrder) => {
+    //         const ownerId = shopOrder.owner._id.toString();
+
+    //         // Avoid duplicate notifications if same owner has multiple shops
+    //         if (!notifiedOwners.has(ownerId)) {
+    //           notifiedOwners.add(ownerId);
+
+    //           // Emit to owner's room (not socket ID directly)
+    //           io.to(`user_${ownerId}`).emit("newOrder", {
+    //             _id: newOrder._id,
+    //             paymentMethod: newOrder.paymentMethod,
+    //             deliveryAddress: newOrder.deliveryAddress,
+    //             totalAmount: newOrder.totalAmount,
+    //             user: {
+    //               _id: newOrder.user._id,
+    //               fullName: newOrder.user.fullName,
+    //               email: newOrder.user.email,
+    //               mobile: newOrder.user.mobile,
+    //             },
+    //             // Send only the shop orders belonging to this owner
+    //             shopOrders: newOrder.shopOrders.filter(
+    //               (so) => so.owner._id.toString() === ownerId
+    //             ),
+    //             createdAt: newOrder.createdAt,
+    //             payment: newOrder.payment,
+    //           });
+
+    //           console.log(`📢 New order notification sent to owner: ${ownerId}`);
+    //         }
+    //       });
+    //     }
+
+    //     return res.status(200).json({
+    //       success: true,
+    //       message: "Order Placed Successfully",
+    //       newOrder,
+    //     });
+    //   } catch (error) {
+    //     console.error("Place order error:", error);
+    //     return res.status(500).json({
+    //       success: false,
+    //       message: `Place order error: ${error.message}`,
+    //     });
+    //   }
+    // };
+
+    // ✅ Emit socket event to shop owners
+    const io = req.app.get("io");
+    if (io) {
+      // Get unique owner IDs to avoid duplicate notifications
+      const notifiedOwners = new Set();
+
+      newOrder.shopOrders.forEach((shopOrder) => {
+        const ownerId = shopOrder.owner._id.toString();
+
+        // Avoid duplicate notifications if same owner has multiple shops
+        if (!notifiedOwners.has(ownerId)) {
+          notifiedOwners.add(ownerId);
+
+          // ✅ CRITICAL: Emit to owner's room (not socket ID)
+          const roomName = `user_${ownerId}`;
+
+          console.log(`📢 Emitting to room: ${roomName}`);
+          console.log(`📢 Checking who's in room...`);
+
+          // Debug: Check if anyone is in the room
+          const socketsInRoom = io.sockets.adapter.rooms.get(roomName);
+          console.log(`👥 Sockets in room ${roomName}:`, socketsInRoom);
+
+          io.to(roomName).emit("newOrder", {
+            _id: newOrder._id,
+            paymentMethod: newOrder.paymentMethod,
+            deliveryAddress: newOrder.deliveryAddress,
+            totalAmount: newOrder.totalAmount,
+            user: {
+              _id: newOrder.user._id,
+              fullName: newOrder.user.fullName,
+              email: newOrder.user.email,
+              mobile: newOrder.user.mobile,
+            },
+            shopOrders: newOrder.shopOrders.filter(
+              (so) => so.owner._id.toString() === ownerId
+            ),
+            createdAt: newOrder.createdAt,
+            payment: newOrder.payment,
+          });
+
+          console.log(`📢 New order notification sent to owner: ${ownerId}`);
+        }
+      });
+    } else {
+      console.error("❌ Socket.IO instance not found!");
+    }
 
     return res.status(200).json({
       success: true,
@@ -158,8 +269,64 @@ export const verifyPayment = async (req, res) => {
     order.razorpayPaymentId = razorpay_payment_id;
     await order.save();
 
-    await order.populate("shopOrders.shopOrderItems.item", "name image price");
+   await order.populate(
+      "shopOrders.shopOrderItems.item",
+      "name image price"
+    );
     await order.populate("shopOrders.shop", "name");
+    await order.populate("shopOrders.owner", "fullName email mobile");
+    await order.populate("user", "fullName email mobile");
+
+
+    // ✅ Emit socket event to shop owners
+    const io = req.app.get("io");
+    if (io) {
+      // Get unique owner IDs to avoid duplicate notifications
+      const notifiedOwners = new Set();
+
+      order.shopOrders.forEach((shopOrder) => {
+        const ownerId = shopOrder.owner._id.toString();
+
+        // Avoid duplicate notifications if same owner has multiple shops
+        if (!notifiedOwners.has(ownerId)) {
+          notifiedOwners.add(ownerId);
+
+          // ✅ CRITICAL: Emit to owner's room (not socket ID)
+          const roomName = `user_${ownerId}`;
+
+          console.log(`📢 Emitting to room: ${roomName}`);
+          console.log(`📢 Checking who's in room...`);
+
+          // Debug: Check if anyone is in the room
+          const socketsInRoom = io.sockets.adapter.rooms.get(roomName);
+          console.log(`👥 Sockets in room ${roomName}:`, socketsInRoom);
+
+          io.to(roomName).emit("newOrder", {
+            _id: order._id,
+            paymentMethod: order.paymentMethod,
+            deliveryAddress: order.deliveryAddress,
+            totalAmount: order.totalAmount,
+            user: {
+              _id: order.user._id,
+              fullName: order.user.fullName,
+              email: order.user.email,
+              mobile: order.user.mobile,
+            },
+            shopOrders: order.shopOrders.filter(
+              (so) => so.owner._id.toString() === ownerId
+            ),
+            createdAt: order.createdAt,
+            payment: order.payment,
+          });
+
+          console.log(`📢 New order notification sent to owner: ${ownerId}`);
+        }
+      });
+    } else {
+      console.error("❌ Socket.IO instance not found!");
+    }
+
+
 
     return res.status(200).json({
       success: true,
@@ -232,6 +399,165 @@ export const getMyOrders = async (req, res) => {
 };
 
 // update order Status
+// export const updateOrderStatus = async (req, res) => {
+//   try {
+//     const { orderId, shopId } = req.params;
+//     const { status } = req.body;
+
+//     const order = await Order.findById(orderId);
+
+//     if (!order) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Order not found",
+//       });
+//     }
+
+//     const shopOrder = order.shopOrders.find(
+//       (o) => o.shop.toString() === shopId.toString()
+//     );
+
+//     if (!shopOrder) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Shop not found or unauthorized",
+//       });
+//     }
+//     // Update status
+//     shopOrder.status = status;
+
+//     let deliveryBoysPayload = [];
+
+//     // Auto-assign delivery boy when status changes to "out of delivery"
+//     if (status === "out of delivery" && !shopOrder.assignedDeliveryBoy) {
+//       const { longitude, latitude } = order.deliveryAddress;
+
+//       // Validate coordinates
+//       if (!longitude || !latitude) {
+//         await order.save();
+//         return res.status(200).json({
+//           success: true,
+//           message:
+//             "Status updated but delivery address coordinates are missing",
+//         });
+//       }
+
+//       try {
+//         // Find nearby delivery boys within 5km radius
+//         const nearbyDeliveryBoys = await User.find({
+//           role: "deliveryBoy",
+//           location: {
+//             $near: {
+//               $geometry: {
+//                 type: "Point",
+//                 coordinates: [Number(longitude), Number(latitude)],
+//               },
+//               $maxDistance: 5000, // 5km in meters
+//             },
+//           },
+//         });
+
+//         if (nearbyDeliveryBoys.length === 0) {
+//           console.log("No nearby delivery boys found");
+//           await order.save();
+//           return res.status(200).json({
+//             success: true,
+//             message: "Status updated but no delivery boys found nearby",
+//             shopOrder,
+//           });
+//         }
+
+//         // Get IDs of nearby delivery boys
+//         const nearByIds = nearbyDeliveryBoys.map((b) => b._id);
+
+//         // Find busy delivery boys
+//         const busyIds = await DeliveryAssignment.find({
+//           assignedTo: {
+//             $in: nearByIds,
+//           },
+//           status: { $nin: ["broadcasted", "completed"] },
+//         }).distinct("assignedTo");
+
+//         // Filter available delivery boys
+//         const busyIdSet = new Set(busyIds.map((id) => id.toString()));
+//         const availableBoys = nearbyDeliveryBoys.filter(
+//           (b) => !busyIdSet.has(b._id.toString())
+//         );
+
+//         if (availableBoys.length === 0) {
+//           console.log("All nearby delivery boys are busy");
+//           await order.save();
+//           return res.json({
+//             success: false,
+//             message:
+//               "Order status updated but all nearby delivery boys are busy",
+//             shopOrder,
+//           });
+//         }
+
+//         const candidates = availableBoys.map((b) => b._id);
+
+//         // Create delivery assignment
+//         const deliveryAssignment = await DeliveryAssignment.create({
+//           order: order._id,
+//           shop: shopOrder.shop,
+//           shopOrderId: shopOrder._id,
+//           broadcastedTo: candidates,
+//           status: "broadcasted",
+//           createdAt: new Date(),
+//         });
+
+//         shopOrder.assignedDeliveryBoy = deliveryAssignment.assignedTo;
+//         shopOrder.assignment = deliveryAssignment._id;
+
+//         // Prepare delivery boy payload (for real-time notifications)
+//         deliveryBoysPayload = availableBoys.map((b) => ({
+//           id: b._id,
+//           fullName: b.fullName,
+//           longitude: b.location.coordinates?.[0],
+//           latitude: b.location.coordinates?.[1],
+//           mobile: b.mobile,
+//         }));
+//         console.log(`Broadcasted to ${availableBoys.length} delivery boys`);
+//       } catch (error) {
+//         console.error("Delivery assignment error:", error);
+//         // Continue without delivery assignment
+//       }
+//     }
+
+//     // Save the order
+//     await order.save();
+//     // Find the updated shop order
+//     const updatedShopOrder = order.shopOrders.find(
+//       (o) => o.shop.toString() === shopId.toString()
+//     );
+
+//     // Populate shop details AND assignment field
+//     await order.populate("shopOrders.shop", "name");
+//     await order.populate(
+//       "shopOrders.assignedDeliveryBoy",
+//       "fullName email mobile"
+//     );
+//     await order.populate("shopOrders.assignment"); // ADD THIS LINE
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Status updated successfully",
+//       shopOrder: updatedShopOrder,
+//       assignedDeliveryBoy: updatedShopOrder?.assignedDeliveryBoy,
+//       availableBoys: deliveryBoysPayload,
+//       assignment: updatedShopOrder?.assignment?._id || null, // SAFE ACCESS
+//     });
+//   } catch (error) {
+//     console.error("Update order status error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: `Update status error: ${error.message}`,
+//       error: error.stack,
+//     });
+//   }
+// };
+
 export const updateOrderStatus = async (req, res) => {
   try {
     const { orderId, shopId } = req.params;
@@ -256,6 +582,7 @@ export const updateOrderStatus = async (req, res) => {
         message: "Shop not found or unauthorized",
       });
     }
+
     // Update status
     shopOrder.status = status;
 
@@ -265,18 +592,15 @@ export const updateOrderStatus = async (req, res) => {
     if (status === "out of delivery" && !shopOrder.assignedDeliveryBoy) {
       const { longitude, latitude } = order.deliveryAddress;
 
-      // Validate coordinates
       if (!longitude || !latitude) {
         await order.save();
         return res.status(200).json({
           success: true,
-          message:
-            "Status updated but delivery address coordinates are missing",
+          message: "Status updated but delivery address coordinates are missing",
         });
       }
 
       try {
-        // Find nearby delivery boys within 5km radius
         const nearbyDeliveryBoys = await User.find({
           role: "deliveryBoy",
           location: {
@@ -285,7 +609,7 @@ export const updateOrderStatus = async (req, res) => {
                 type: "Point",
                 coordinates: [Number(longitude), Number(latitude)],
               },
-              $maxDistance: 5000, // 5km in meters
+              $maxDistance: 5000,
             },
           },
         });
@@ -300,18 +624,13 @@ export const updateOrderStatus = async (req, res) => {
           });
         }
 
-        // Get IDs of nearby delivery boys
         const nearByIds = nearbyDeliveryBoys.map((b) => b._id);
 
-        // Find busy delivery boys
         const busyIds = await DeliveryAssignment.find({
-          assignedTo: {
-            $in: nearByIds,
-          },
+          assignedTo: { $in: nearByIds },
           status: { $nin: ["broadcasted", "completed"] },
         }).distinct("assignedTo");
 
-        // Filter available delivery boys
         const busyIdSet = new Set(busyIds.map((id) => id.toString()));
         const availableBoys = nearbyDeliveryBoys.filter(
           (b) => !busyIdSet.has(b._id.toString())
@@ -322,15 +641,13 @@ export const updateOrderStatus = async (req, res) => {
           await order.save();
           return res.json({
             success: false,
-            message:
-              "Order status updated but all nearby delivery boys are busy",
+            message: "Order status updated but all nearby delivery boys are busy",
             shopOrder,
           });
         }
 
         const candidates = availableBoys.map((b) => b._id);
 
-        // Create delivery assignment
         const deliveryAssignment = await DeliveryAssignment.create({
           order: order._id,
           shop: shopOrder.shop,
@@ -343,7 +660,6 @@ export const updateOrderStatus = async (req, res) => {
         shopOrder.assignedDeliveryBoy = deliveryAssignment.assignedTo;
         shopOrder.assignment = deliveryAssignment._id;
 
-        // Prepare delivery boy payload (for real-time notifications)
         deliveryBoysPayload = availableBoys.map((b) => ({
           id: b._id,
           fullName: b.fullName,
@@ -354,12 +670,12 @@ export const updateOrderStatus = async (req, res) => {
         console.log(`Broadcasted to ${availableBoys.length} delivery boys`);
       } catch (error) {
         console.error("Delivery assignment error:", error);
-        // Continue without delivery assignment
       }
     }
 
     // Save the order
     await order.save();
+
     // Find the updated shop order
     const updatedShopOrder = order.shopOrders.find(
       (o) => o.shop.toString() === shopId.toString()
@@ -367,11 +683,37 @@ export const updateOrderStatus = async (req, res) => {
 
     // Populate shop details AND assignment field
     await order.populate("shopOrders.shop", "name");
-    await order.populate(
-      "shopOrders.assignedDeliveryBoy",
-      "fullName email mobile"
-    );
-    await order.populate("shopOrders.assignment"); // ADD THIS LINE
+    await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile");
+    await order.populate("shopOrders.assignment");
+
+    // ✅ CHANGE 1: Emit socket event to customer for real-time status update
+    const io = req.app.get("io");
+    if (io) {
+      const customerId = order.user.toString();
+      const roomName = `user_${customerId}`;
+
+      console.log(`📊 Emitting status update to room: ${roomName}`);
+      console.log(`📊 New status: ${status} for order: ${orderId}`);
+
+      // Check if customer is in the room
+      const socketsInRoom = io.sockets.adapter.rooms.get(roomName);
+      console.log(`👥 Sockets in room ${roomName}:`, socketsInRoom);
+
+      io.to(roomName).emit("orderStatusChanged", {
+        orderId,
+        shopId,
+        status,
+        shopOrder: {
+          _id: updatedShopOrder._id,
+          status: updatedShopOrder.status,
+          assignedDeliveryBoy: updatedShopOrder.assignedDeliveryBoy,
+        },
+      });
+
+      console.log(`✅ Status update notification sent to customer: ${customerId}`);
+    } else {
+      console.error("❌ Socket.IO instance not found!");
+    }
 
     return res.status(200).json({
       success: true,
@@ -379,7 +721,7 @@ export const updateOrderStatus = async (req, res) => {
       shopOrder: updatedShopOrder,
       assignedDeliveryBoy: updatedShopOrder?.assignedDeliveryBoy,
       availableBoys: deliveryBoysPayload,
-      assignment: updatedShopOrder?.assignment?._id || null, // SAFE ACCESS
+      assignment: updatedShopOrder?.assignment?._id || null,
     });
   } catch (error) {
     console.error("Update order status error:", error);

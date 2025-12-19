@@ -333,6 +333,31 @@
 
 // export default CheckOut;
 
+
+
+
+
+
+
+
+// 1. Customer clicks "Place Order" in CheckOut.jsx
+//    ↓
+// 2. Frontend sends POST to /api/order/place-order
+//    ↓
+// 3. Backend creates order in database
+//    ↓
+// 4. Backend emits socket event: io.to(`user_${ownerId}`).emit("newOrder", orderData)
+//    ↓
+// 5. Owner's browser (MyOrders.jsx) receives "newOrder" event
+//    ↓
+// 6. handleNewOrder callback executes
+//    ↓
+// 7. dispatch(addMyOrders(orderData)) - adds to Redux
+//    ↓
+// 8. Owner's MyOrders page updates instantly ✨
+//    ↓
+// 9. Customer's page also shows order (from addMyOrders in CheckOut)
+
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaSearch, FaMoneyBillWave, FaCreditCard } from "react-icons/fa";
